@@ -22,8 +22,24 @@ def health_check(request):
 from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
+from django.contrib.auth.decorators import login_required
+from api.views.auth_views import login_view, register_view, logout_view, profile_view, password_reset_view
+
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='index.html'), name='home'),
+    path('', login_required(TemplateView.as_view(template_name='index.html')), name='home'),
+    path('expenses/', login_required(TemplateView.as_view(template_name='expenses.html')), name='expenses'),
+    path('income/', login_required(TemplateView.as_view(template_name='income.html')), name='income'),
+    path('categories/', login_required(TemplateView.as_view(template_name='categories.html')), name='categories'),
+    path('reports/', login_required(TemplateView.as_view(template_name='reports.html')), name='reports'),
+    path('settings/', login_required(TemplateView.as_view(template_name='settings.html')), name='settings'),
+    path('profile/', profile_view, name='profile'),
+    
+    # Auth Routes
+    path('login/', login_view, name='login'),
+    path('register/', register_view, name='register'),
+    path('logout/', logout_view, name='logout'),
+    path('password-reset/', password_reset_view, name='password_reset'),
+
     path('admin/', admin.site.urls),
     path('health', health_check),
     path('api/v1/', include('api.urls')),

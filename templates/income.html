@@ -1,13 +1,16 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ExpenseIQ - Track your income sources and earnings">
   <title>ExpenseIQ — Income</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
   <div id="layoutSidebar"></div>
   <div class="main-content">
@@ -61,7 +64,15 @@
         </div>
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>Source</th><th>Description</th><th>Date</th><th>Method</th><th>Amount</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Description</th>
+                <th>Date</th>
+                <th>Method</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
             <tbody id="incomeTableBody"></tbody>
           </table>
         </div>
@@ -129,8 +140,8 @@
   </div>
   <div id="layoutBottomNav"></div>
 
-  <script src="js/components.js"></script>
-  <script src="js/app.js"></script>
+  <script src="{% static 'js/components.js' %}"></script>
+  <script src="{% static 'js/app.js' %}"></script>
   <script>
     document.getElementById('layoutSidebar').innerHTML = renderSidebar('income');
     document.getElementById('layoutTopbar').innerHTML = renderTopbar('Income', 'Track your income sources and earnings');
@@ -138,7 +149,7 @@
     injectLayout();
 
     // KPIs
-    const total = AppData.income.reduce((s,i) => s + i.amount, 0);
+    const total = AppData.income.reduce((s, i) => s + i.amount, 0);
     setTimeout(() => {
       animateCounter(document.getElementById('incTotal'), total, '$');
       animateCounter(document.getElementById('incAvg'), Math.round(total / 6), '$');
@@ -162,19 +173,19 @@
     new Chart(document.getElementById('incomeChart'), {
       type: 'bar',
       data: {
-        labels: ['Dec','Jan','Feb','Mar','Apr','May'],
+        labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
         datasets: [{
-          data: [5800,6100,5900,6400,6800,7190],
+          data: [5800, 6100, 5900, 6400, 6800, 7190],
           backgroundColor: 'rgba(16,185,129,0.3)',
           borderColor: '#10b981', borderWidth: 1, borderRadius: 8, barPercentage: 0.6
         }]
       },
       options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{
-          x:{grid:{color:gridColor()},ticks:{color:textColor(),font:{family:'Inter',size:11}}},
-          y:{grid:{color:gridColor()},ticks:{color:textColor(),font:{family:'Inter',size:11}}}
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: gridColor() }, ticks: { color: textColor(), font: { family: 'Inter', size: 11 } } },
+          y: { grid: { color: gridColor() }, ticks: { color: textColor(), font: { family: 'Inter', size: 11 } } }
         }
       }
     });
@@ -190,4 +201,5 @@
     });
   </script>
 </body>
+
 </html>

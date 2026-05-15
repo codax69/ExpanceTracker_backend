@@ -1,12 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ExpenseIQ - Application settings and preferences">
   <title>ExpenseIQ — Settings</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
+
 <body>
   <div id="layoutSidebar"></div>
   <div class="main-content">
@@ -16,7 +19,9 @@
       <div class="settings-grid">
         <!-- Appearance -->
         <div class="card fade-in">
-          <div class="card-header"><div class="card-title">🎨 Appearance</div></div>
+          <div class="card-header">
+            <div class="card-title">🎨 Appearance</div>
+          </div>
           <div class="setting-item">
             <div>
               <div style="font-weight:500">Dark Mode</div>
@@ -42,7 +47,9 @@
 
         <!-- Currency -->
         <div class="card fade-in">
-          <div class="card-header"><div class="card-title">💰 Currency & Regional</div></div>
+          <div class="card-header">
+            <div class="card-title">💰 Currency & Regional</div>
+          </div>
           <div class="setting-item">
             <div>
               <div style="font-weight:500">Currency</div>
@@ -83,7 +90,9 @@
 
         <!-- Data & Backup -->
         <div class="card fade-in">
-          <div class="card-header"><div class="card-title">🔒 Data & Backup</div></div>
+          <div class="card-header">
+            <div class="card-title">🔒 Data & Backup</div>
+          </div>
           <div class="setting-item">
             <div>
               <div style="font-weight:500">Auto Backup</div>
@@ -95,10 +104,12 @@
             <button class="btn btn-secondary" style="width:100%" onclick="showToast('Data exported successfully!')">
               📥 Export All Data
             </button>
-            <button class="btn btn-secondary" style="width:100%" onclick="showToast('Import feature coming soon','warning')">
+            <button class="btn btn-secondary" style="width:100%"
+              onclick="showToast('Import feature coming soon','warning')">
               📤 Import Data
             </button>
-            <button class="btn btn-danger" style="width:100%" onclick="showToast('This action cannot be undone','error')">
+            <button class="btn btn-danger" style="width:100%"
+              onclick="showToast('This action cannot be undone','error')">
               🗑️ Clear All Data
             </button>
           </div>
@@ -106,7 +117,9 @@
 
         <!-- Notifications -->
         <div class="card fade-in">
-          <div class="card-header"><div class="card-title">🔔 Notifications</div></div>
+          <div class="card-header">
+            <div class="card-title">🔔 Notifications</div>
+          </div>
           <div class="setting-item">
             <div>
               <div style="font-weight:500">Budget Alerts</div>
@@ -132,7 +145,9 @@
 
         <!-- Profile -->
         <div class="card fade-in">
-          <div class="card-header"><div class="card-title">👤 Profile</div></div>
+          <div class="card-header">
+            <div class="card-title">👤 Profile</div>
+          </div>
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
             <div class="avatar" style="width:56px;height:56px;font-size:20px">PK</div>
             <div>
@@ -153,7 +168,9 @@
 
         <!-- About -->
         <div class="card fade-in">
-          <div class="card-header"><div class="card-title">ℹ️ About</div></div>
+          <div class="card-header">
+            <div class="card-title">ℹ️ About</div>
+          </div>
           <div class="setting-item">
             <span style="color:var(--text-secondary)">Version</span>
             <span style="font-weight:500">1.0.0</span>
@@ -172,8 +189,8 @@
   </div>
   <div id="layoutBottomNav"></div>
 
-  <script src="js/components.js"></script>
-  <script src="js/app.js"></script>
+  <script src="{% static 'js/components.js' %}"></script>
+  <script src="{% static 'js/app.js' %}"></script>
   <script>
     document.getElementById('layoutSidebar').innerHTML = renderSidebar('settings');
     document.getElementById('layoutTopbar').innerHTML = renderTopbar('Settings', 'Customize your experience');
@@ -185,4 +202,5 @@
     if (!document.body.classList.contains('light-mode')) dmToggle.classList.add('active');
   </script>
 </body>
+
 </html>

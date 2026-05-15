@@ -1,14 +1,16 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ExpenseIQ - Premium Financial Dashboard for tracking expenses, income, and budgets">
   <title>ExpenseIQ — Dashboard</title>
-  {% load static %}
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
   <div id="layoutSidebar"></div>
   <div class="main-content" id="mainContent">
@@ -106,9 +108,10 @@
       <div class="card fade-in" style="margin-bottom:28px">
         <div class="card-header">
           <div class="card-title">Budget Progress</div>
-          <a href="categories.html" class="btn btn-sm btn-secondary">Manage Budgets</a>
+          <a href="{% url 'categories' %}" class="btn btn-sm btn-secondary">Manage Budgets</a>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px" id="budgetProgress"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"
+          id="budgetProgress"></div>
       </div>
 
       <!-- Spending Insights -->
@@ -117,21 +120,24 @@
           <div class="insight-icon" style="background:var(--accent-emerald-glow);color:var(--accent-emerald)">💡</div>
           <div>
             <div style="font-weight:600;margin-bottom:4px">Smart Saving Tip</div>
-            <div style="font-size:13px;color:var(--text-secondary)">Your food spending is 15% higher than average. Consider meal prepping to save $60/month.</div>
+            <div style="font-size:13px;color:var(--text-secondary)">Your food spending is 15% higher than average.
+              Consider meal prepping to save $60/month.</div>
           </div>
         </div>
         <div class="insight-card fade-in">
           <div class="insight-icon" style="background:var(--accent-purple-glow);color:var(--accent-purple)">🎯</div>
           <div>
             <div style="font-weight:600;margin-bottom:4px">Budget Alert</div>
-            <div style="font-size:13px;color:var(--text-secondary)">Utilities spending is at 55% of monthly budget. You're on track to stay under budget.</div>
+            <div style="font-size:13px;color:var(--text-secondary)">Utilities spending is at 55% of monthly budget.
+              You're on track to stay under budget.</div>
           </div>
         </div>
         <div class="insight-card fade-in">
           <div class="insight-icon" style="background:var(--accent-orange-glow);color:var(--accent-orange)">📊</div>
           <div>
             <div style="font-weight:600;margin-bottom:4px">Trend Analysis</div>
-            <div style="font-size:13px;color:var(--text-secondary)">Your savings rate improved by 2.3% this month. Keep up the great work!</div>
+            <div style="font-size:13px;color:var(--text-secondary)">Your savings rate improved by 2.3% this month. Keep
+              up the great work!</div>
           </div>
         </div>
       </div>
@@ -140,12 +146,19 @@
       <div class="card fade-in">
         <div class="card-header">
           <div class="card-title">Recent Transactions</div>
-          <a href="expenses.html" class="btn btn-sm btn-secondary">View All</a>
+          <a href="{% url 'expenses' %}" class="btn btn-sm btn-secondary">View All</a>
         </div>
         <div class="table-wrapper">
           <table>
             <thead>
-              <tr><th>Transaction</th><th>Category</th><th>Date</th><th>Method</th><th>Amount</th><th>Status</th></tr>
+              <tr>
+                <th>Transaction</th>
+                <th>Category</th>
+                <th>Date</th>
+                <th>Method</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
             </thead>
             <tbody id="recentTransactions"></tbody>
           </table>
@@ -276,7 +289,7 @@
         labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
         datasets: [{
           data: [1850, 2100, 1750, 1980, 1620, 591],
-          backgroundColor: ['rgba(16,185,129,0.3)','rgba(16,185,129,0.4)','rgba(16,185,129,0.3)','rgba(16,185,129,0.5)','rgba(16,185,129,0.4)','rgba(16,185,129,0.7)'],
+          backgroundColor: ['rgba(16,185,129,0.3)', 'rgba(16,185,129,0.4)', 'rgba(16,185,129,0.3)', 'rgba(16,185,129,0.5)', 'rgba(16,185,129,0.4)', 'rgba(16,185,129,0.7)'],
           borderColor: '#10b981', borderWidth: 1, borderRadius: 8, barPercentage: 0.6
         }]
       },
@@ -290,7 +303,7 @@
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         datasets: [
           { label: 'This Week', data: [45, 80, 35, 120, 65, 90, 40], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#8b5cf6' },
-          { label: 'Last Week', data: [60, 55, 70, 90, 50, 110, 75], borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.05)', fill: true, tension: 0.4, borderDash: [5,5], pointRadius: 3, pointBackgroundColor: '#06b6d4' }
+          { label: 'Last Week', data: [60, 55, 70, 90, 50, 110, 75], borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.05)', fill: true, tension: 0.4, borderDash: [5, 5], pointRadius: 3, pointBackgroundColor: '#06b6d4' }
         ]
       },
       options: { ...chartDefaults(), plugins: { legend: { display: true, labels: { color: textColor(), font: { family: 'Inter', size: 11 }, usePointStyle: true, pointStyle: 'circle' } } } }
@@ -303,7 +316,7 @@
         labels: AppData.categories.map(c => c.name),
         datasets: [{
           data: AppData.categories.map(c => c.spent),
-          backgroundColor: ['#10b981','#06b6d4','#8b5cf6','#f59e0b','#ef4444','#ec4899'],
+          backgroundColor: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'],
           borderWidth: 0, hoverOffset: 8
         }]
       },
@@ -350,4 +363,5 @@
     });
   </script>
 </body>
+
 </html>

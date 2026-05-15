@@ -1,13 +1,16 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ExpenseIQ - Financial reports and analytics">
   <title>ExpenseIQ — Reports</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
   <div id="layoutSidebar"></div>
   <div class="main-content">
@@ -76,10 +79,20 @@
 
       <!-- Monthly Summary Table -->
       <div class="card fade-in" style="margin-top:24px">
-        <div class="card-header"><div class="card-title">Monthly Summary</div></div>
+        <div class="card-header">
+          <div class="card-title">Monthly Summary</div>
+        </div>
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Savings</th><th>Savings Rate</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Income</th>
+                <th>Expenses</th>
+                <th>Savings</th>
+                <th>Savings Rate</th>
+              </tr>
+            </thead>
             <tbody id="monthlySummary"></tbody>
           </table>
         </div>
@@ -87,13 +100,35 @@
 
       <!-- Weekly Summary -->
       <div class="card fade-in" style="margin-top:24px">
-        <div class="card-header"><div class="card-title">Weekly Summary (Current Month)</div></div>
+        <div class="card-header">
+          <div class="card-title">Weekly Summary (Current Month)</div>
+        </div>
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>Week</th><th>Expenses</th><th>Top Category</th><th>Transactions</th><th>Daily Avg</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Expenses</th>
+                <th>Top Category</th>
+                <th>Transactions</th>
+                <th>Daily Avg</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><td>Week 1 (May 1-7)</td><td style="color:var(--accent-red)">$425</td><td><span class="badge badge-emerald">🍔 Food</span></td><td>8</td><td>$60.71</td></tr>
-              <tr><td>Week 2 (May 8-14)</td><td style="color:var(--accent-red)">$166</td><td><span class="badge badge-cyan">⚡ Utilities</span></td><td>3</td><td>$55.33</td></tr>
+              <tr>
+                <td>Week 1 (May 1-7)</td>
+                <td style="color:var(--accent-red)">$425</td>
+                <td><span class="badge badge-emerald">🍔 Food</span></td>
+                <td>8</td>
+                <td>$60.71</td>
+              </tr>
+              <tr>
+                <td>Week 2 (May 8-14)</td>
+                <td style="color:var(--accent-red)">$166</td>
+                <td><span class="badge badge-cyan">⚡ Utilities</span></td>
+                <td>3</td>
+                <td>$55.33</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -105,21 +140,24 @@
           <div class="insight-icon" style="background:var(--accent-emerald-glow);color:var(--accent-emerald)">📉</div>
           <div>
             <div style="font-weight:600;margin-bottom:4px">Spending Reduced</div>
-            <div style="font-size:13px;color:var(--text-secondary)">Your spending decreased by 18% compared to last month. Great progress!</div>
+            <div style="font-size:13px;color:var(--text-secondary)">Your spending decreased by 18% compared to last
+              month. Great progress!</div>
           </div>
         </div>
         <div class="insight-card fade-in">
           <div class="insight-icon" style="background:var(--accent-purple-glow);color:var(--accent-purple)">🏆</div>
           <div>
             <div style="font-weight:600;margin-bottom:4px">Top Saving Month</div>
-            <div style="font-size:13px;color:var(--text-secondary)">May is your best savings month so far with a 82% savings rate.</div>
+            <div style="font-size:13px;color:var(--text-secondary)">May is your best savings month so far with a 82%
+              savings rate.</div>
           </div>
         </div>
         <div class="insight-card fade-in">
           <div class="insight-icon" style="background:var(--accent-orange-glow);color:var(--accent-orange)">⚠️</div>
           <div>
             <div style="font-weight:600;margin-bottom:4px">Watch Out</div>
-            <div style="font-size:13px;color:var(--text-secondary)">Food spending has been consistently above budget for 3 months.</div>
+            <div style="font-size:13px;color:var(--text-secondary)">Food spending has been consistently above budget for
+              3 months.</div>
           </div>
         </div>
       </div>
@@ -127,8 +165,8 @@
   </div>
   <div id="layoutBottomNav"></div>
 
-  <script src="js/components.js"></script>
-  <script src="js/app.js"></script>
+  <script src="{% static 'js/components.js' %}"></script>
+  <script src="{% static 'js/app.js' %}"></script>
   <script>
     document.getElementById('layoutSidebar').innerHTML = renderSidebar('reports');
     document.getElementById('layoutTopbar').innerHTML = renderTopbar('Reports', 'Financial analytics and insights');
@@ -144,9 +182,9 @@
 
     // Monthly summary table
     const months = [
-      { m:'December', inc:5800, exp:1850 }, { m:'January', inc:6100, exp:2100 },
-      { m:'February', inc:5900, exp:1750 }, { m:'March', inc:6400, exp:1980 },
-      { m:'April', inc:6800, exp:1620 }, { m:'May', inc:7190, exp:591 }
+      { m: 'December', inc: 5800, exp: 1850 }, { m: 'January', inc: 6100, exp: 2100 },
+      { m: 'February', inc: 5900, exp: 1750 }, { m: 'March', inc: 6400, exp: 1980 },
+      { m: 'April', inc: 6800, exp: 1620 }, { m: 'May', inc: 7190, exp: 591 }
     ];
     const tBody = document.getElementById('monthlySummary');
     months.forEach(m => {
@@ -168,28 +206,35 @@
     new Chart(document.getElementById('spendingAnalytics'), {
       type: 'line',
       data: {
-        labels: ['Dec','Jan','Feb','Mar','Apr','May'],
+        labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
         datasets: [{
-          data: [1850,2100,1750,1980,1620,591],
-          borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)',
-          fill:true, tension:0.4, pointRadius:5, pointBackgroundColor:'#8b5cf6'
+          data: [1850, 2100, 1750, 1980, 1620, 591],
+          borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)',
+          fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#8b5cf6'
         }]
       },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-        scales:{ x:{grid:{color:gc()},ticks:{color:tc()}}, y:{grid:{color:gc()},ticks:{color:tc()}} } }
+      options: {
+        responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: gc() }, ticks: { color: tc() } }, y: { grid: { color: gc() }, ticks: { color: tc() } } }
+      }
     });
 
     new Chart(document.getElementById('categoryBreakdown'), {
       type: 'polarArea',
       data: {
-        labels: AppData.categories.map(c=>c.name),
-        datasets: [{ data: AppData.categories.map(c=>c.spent),
-          backgroundColor: ['rgba(16,185,129,0.5)','rgba(6,182,212,0.5)','rgba(139,92,246,0.5)','rgba(245,158,11,0.5)','rgba(239,68,68,0.5)','rgba(236,72,153,0.5)'],
-          borderWidth:0 }]
+        labels: AppData.categories.map(c => c.name),
+        datasets: [{
+          data: AppData.categories.map(c => c.spent),
+          backgroundColor: ['rgba(16,185,129,0.5)', 'rgba(6,182,212,0.5)', 'rgba(139,92,246,0.5)', 'rgba(245,158,11,0.5)', 'rgba(239,68,68,0.5)', 'rgba(236,72,153,0.5)'],
+          borderWidth: 0
+        }]
       },
-      options: { responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{position:'right',labels:{color:tc(),font:{family:'Inter',size:12},padding:12,usePointStyle:true}}} }
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { color: tc(), font: { family: 'Inter', size: 12 }, padding: 12, usePointStyle: true } } }
+      }
     });
   </script>
 </body>
+
 </html>
