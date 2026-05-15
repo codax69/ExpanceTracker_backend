@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ExpenseIQ - Application settings and preferences">
+  <title>ExpenseIQ — Settings</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="layoutSidebar"></div>
+  <div class="main-content">
+    <div id="layoutTopbar"></div>
+    <div class="page fade-in">
+
+      <div class="settings-grid">
+        <!-- Appearance -->
+        <div class="card fade-in">
+          <div class="card-header"><div class="card-title">🎨 Appearance</div></div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Dark Mode</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Toggle between dark and light theme</div>
+            </div>
+            <div class="toggle" id="darkModeToggle" onclick="toggleTheme();this.classList.toggle('active')"></div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Compact Mode</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Reduce spacing for denser layout</div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('active')"></div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Animations</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Enable smooth transitions and effects</div>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+        </div>
+
+        <!-- Currency -->
+        <div class="card fade-in">
+          <div class="card-header"><div class="card-title">💰 Currency & Regional</div></div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Currency</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Set your default currency</div>
+            </div>
+            <select class="form-select" style="width:140px">
+              <option>$ USD</option>
+              <option>€ EUR</option>
+              <option>£ GBP</option>
+              <option>₹ INR</option>
+              <option>¥ JPY</option>
+              <option>₿ BTC</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Date Format</div>
+              <div style="font-size:13px;color:var(--text-secondary)">How dates are displayed</div>
+            </div>
+            <select class="form-select" style="width:160px">
+              <option>YYYY-MM-DD</option>
+              <option>MM/DD/YYYY</option>
+              <option>DD/MM/YYYY</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Number Format</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Thousands separator style</div>
+            </div>
+            <select class="form-select" style="width:140px">
+              <option>1,000.00</option>
+              <option>1.000,00</option>
+              <option>1 000.00</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Data & Backup -->
+        <div class="card fade-in">
+          <div class="card-header"><div class="card-title">🔒 Data & Backup</div></div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Auto Backup</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Automatically backup data weekly</div>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+          <div style="padding-top:12px;display:flex;flex-direction:column;gap:12px">
+            <button class="btn btn-secondary" style="width:100%" onclick="showToast('Data exported successfully!')">
+              📥 Export All Data
+            </button>
+            <button class="btn btn-secondary" style="width:100%" onclick="showToast('Import feature coming soon','warning')">
+              📤 Import Data
+            </button>
+            <button class="btn btn-danger" style="width:100%" onclick="showToast('This action cannot be undone','error')">
+              🗑️ Clear All Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="card fade-in">
+          <div class="card-header"><div class="card-title">🔔 Notifications</div></div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Budget Alerts</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Notify when nearing budget limits</div>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Weekly Report</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Receive weekly spending summary</div>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div style="font-weight:500">Recurring Reminders</div>
+              <div style="font-size:13px;color:var(--text-secondary)">Remind about recurring expenses</div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('active')"></div>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div class="card fade-in">
+          <div class="card-header"><div class="card-title">👤 Profile</div></div>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+            <div class="avatar" style="width:56px;height:56px;font-size:20px">PK</div>
+            <div>
+              <div style="font-weight:600;font-size:16px">Priten Kumar</div>
+              <div style="font-size:13px;color:var(--text-secondary)">priten@email.com</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Display Name</label>
+            <input type="text" class="form-input" value="Priten Kumar">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" value="priten@email.com">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="showToast('Profile updated!')">Save Changes</button>
+        </div>
+
+        <!-- About -->
+        <div class="card fade-in">
+          <div class="card-header"><div class="card-title">ℹ️ About</div></div>
+          <div class="setting-item">
+            <span style="color:var(--text-secondary)">Version</span>
+            <span style="font-weight:500">1.0.0</span>
+          </div>
+          <div class="setting-item">
+            <span style="color:var(--text-secondary)">Built with</span>
+            <span style="font-weight:500">HTML, CSS, JS</span>
+          </div>
+          <div class="setting-item">
+            <span style="color:var(--text-secondary)">Last Updated</span>
+            <span style="font-weight:500">May 8, 2026</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="layoutBottomNav"></div>
+
+  <script src="js/components.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('layoutSidebar').innerHTML = renderSidebar('settings');
+    document.getElementById('layoutTopbar').innerHTML = renderTopbar('Settings', 'Customize your experience');
+    document.getElementById('layoutBottomNav').innerHTML = renderBottomNav('settings');
+    injectLayout();
+
+    // Sync dark mode toggle with actual state
+    const dmToggle = document.getElementById('darkModeToggle');
+    if (!document.body.classList.contains('light-mode')) dmToggle.classList.add('active');
+  </script>
+</body>
+</html>

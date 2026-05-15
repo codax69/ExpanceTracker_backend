@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ExpenseIQ - Financial reports and analytics">
+  <title>ExpenseIQ — Reports</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="layoutSidebar"></div>
+  <div class="main-content">
+    <div id="layoutTopbar"></div>
+    <div class="page fade-in">
+
+      <!-- Filter Bar -->
+      <div class="card" style="margin-bottom:24px">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div class="form-group" style="margin:0">
+              <input type="date" class="form-input" value="2026-01-01" style="width:160px">
+            </div>
+            <span style="color:var(--text-muted)">to</span>
+            <div class="form-group" style="margin:0">
+              <input type="date" class="form-input" value="2026-05-08" style="width:160px">
+            </div>
+            <button class="btn btn-sm btn-secondary">Apply</button>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-secondary">📄 Export PDF</button>
+            <button class="btn btn-sm btn-secondary">📊 Export CSV</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="kpi-grid" style="margin-bottom:24px">
+        <div class="kpi-card emerald fade-in stagger-1">
+          <div class="kpi-icon emerald">📊</div>
+          <div class="kpi-label">Total Revenue</div>
+          <div class="kpi-value" id="rRevenue">$0</div>
+        </div>
+        <div class="kpi-card purple fade-in stagger-2">
+          <div class="kpi-icon purple">💸</div>
+          <div class="kpi-label">Total Spending</div>
+          <div class="kpi-value" id="rSpending">$0</div>
+        </div>
+        <div class="kpi-card cyan fade-in stagger-3">
+          <div class="kpi-icon cyan">💰</div>
+          <div class="kpi-label">Net Savings</div>
+          <div class="kpi-value" id="rSavings">$0</div>
+        </div>
+        <div class="kpi-card orange fade-in stagger-4">
+          <div class="kpi-icon orange">📈</div>
+          <div class="kpi-label">Avg Monthly Spend</div>
+          <div class="kpi-value" id="rAvgSpend">$0</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="card fade-in">
+          <div class="card-header">
+            <div class="card-title">6-Month Spending Analytics</div>
+          </div>
+          <div class="chart-container"><canvas id="spendingAnalytics"></canvas></div>
+        </div>
+        <div class="card fade-in">
+          <div class="card-header">
+            <div class="card-title">Category Breakdown</div>
+          </div>
+          <div class="chart-container"><canvas id="categoryBreakdown"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Monthly Summary Table -->
+      <div class="card fade-in" style="margin-top:24px">
+        <div class="card-header"><div class="card-title">Monthly Summary</div></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Savings</th><th>Savings Rate</th></tr></thead>
+            <tbody id="monthlySummary"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Weekly Summary -->
+      <div class="card fade-in" style="margin-top:24px">
+        <div class="card-header"><div class="card-title">Weekly Summary (Current Month)</div></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Week</th><th>Expenses</th><th>Top Category</th><th>Transactions</th><th>Daily Avg</th></tr></thead>
+            <tbody>
+              <tr><td>Week 1 (May 1-7)</td><td style="color:var(--accent-red)">$425</td><td><span class="badge badge-emerald">🍔 Food</span></td><td>8</td><td>$60.71</td></tr>
+              <tr><td>Week 2 (May 8-14)</td><td style="color:var(--accent-red)">$166</td><td><span class="badge badge-cyan">⚡ Utilities</span></td><td>3</td><td>$55.33</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Insight Widgets -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-top:24px">
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:var(--accent-emerald-glow);color:var(--accent-emerald)">📉</div>
+          <div>
+            <div style="font-weight:600;margin-bottom:4px">Spending Reduced</div>
+            <div style="font-size:13px;color:var(--text-secondary)">Your spending decreased by 18% compared to last month. Great progress!</div>
+          </div>
+        </div>
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:var(--accent-purple-glow);color:var(--accent-purple)">🏆</div>
+          <div>
+            <div style="font-weight:600;margin-bottom:4px">Top Saving Month</div>
+            <div style="font-size:13px;color:var(--text-secondary)">May is your best savings month so far with a 82% savings rate.</div>
+          </div>
+        </div>
+        <div class="insight-card fade-in">
+          <div class="insight-icon" style="background:var(--accent-orange-glow);color:var(--accent-orange)">⚠️</div>
+          <div>
+            <div style="font-weight:600;margin-bottom:4px">Watch Out</div>
+            <div style="font-size:13px;color:var(--text-secondary)">Food spending has been consistently above budget for 3 months.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="layoutBottomNav"></div>
+
+  <script src="js/components.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('layoutSidebar').innerHTML = renderSidebar('reports');
+    document.getElementById('layoutTopbar').innerHTML = renderTopbar('Reports', 'Financial analytics and insights');
+    document.getElementById('layoutBottomNav').innerHTML = renderBottomNav('reports');
+    injectLayout();
+
+    setTimeout(() => {
+      animateCounter(document.getElementById('rRevenue'), 38190, '$');
+      animateCounter(document.getElementById('rSpending'), 9891, '$');
+      animateCounter(document.getElementById('rSavings'), 28299, '$');
+      animateCounter(document.getElementById('rAvgSpend'), 1648, '$');
+    }, 200);
+
+    // Monthly summary table
+    const months = [
+      { m:'December', inc:5800, exp:1850 }, { m:'January', inc:6100, exp:2100 },
+      { m:'February', inc:5900, exp:1750 }, { m:'March', inc:6400, exp:1980 },
+      { m:'April', inc:6800, exp:1620 }, { m:'May', inc:7190, exp:591 }
+    ];
+    const tBody = document.getElementById('monthlySummary');
+    months.forEach(m => {
+      const savings = m.inc - m.exp;
+      const rate = Math.round((savings / m.inc) * 100);
+      tBody.innerHTML += `<tr>
+        <td style="font-weight:500;color:var(--text-primary)">${m.m}</td>
+        <td style="color:var(--accent-emerald)">$${m.inc.toLocaleString()}</td>
+        <td style="color:var(--accent-red)">$${m.exp.toLocaleString()}</td>
+        <td style="color:var(--accent-cyan)">$${savings.toLocaleString()}</td>
+        <td><span class="badge badge-emerald">${rate}%</span></td>
+      </tr>`;
+    });
+
+    // Charts
+    const tc = () => document.body.classList.contains('light-mode') ? '#64648a' : '#8a8a9a';
+    const gc = () => document.body.classList.contains('light-mode') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+
+    new Chart(document.getElementById('spendingAnalytics'), {
+      type: 'line',
+      data: {
+        labels: ['Dec','Jan','Feb','Mar','Apr','May'],
+        datasets: [{
+          data: [1850,2100,1750,1980,1620,591],
+          borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)',
+          fill:true, tension:0.4, pointRadius:5, pointBackgroundColor:'#8b5cf6'
+        }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{ x:{grid:{color:gc()},ticks:{color:tc()}}, y:{grid:{color:gc()},ticks:{color:tc()}} } }
+    });
+
+    new Chart(document.getElementById('categoryBreakdown'), {
+      type: 'polarArea',
+      data: {
+        labels: AppData.categories.map(c=>c.name),
+        datasets: [{ data: AppData.categories.map(c=>c.spent),
+          backgroundColor: ['rgba(16,185,129,0.5)','rgba(6,182,212,0.5)','rgba(139,92,246,0.5)','rgba(245,158,11,0.5)','rgba(239,68,68,0.5)','rgba(236,72,153,0.5)'],
+          borderWidth:0 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'right',labels:{color:tc(),font:{family:'Inter',size:12},padding:12,usePointStyle:true}}} }
+    });
+  </script>
+</body>
+</html>

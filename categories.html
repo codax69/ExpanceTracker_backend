@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ExpenseIQ - Manage expense categories and budgets">
+  <title>ExpenseIQ — Categories</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="layoutSidebar"></div>
+  <div class="main-content">
+    <div id="layoutTopbar"></div>
+    <div class="page fade-in">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:18px;font-weight:600">Your Categories</h2>
+          <p style="font-size:13px;color:var(--text-secondary)">Manage spending categories and budgets</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('categoryFormModal')">+ New Category</button>
+      </div>
+
+      <!-- Category Cards Grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px" id="categoryGrid"></div>
+    </div>
+
+    <!-- Category Form Modal -->
+    <div class="modal-overlay" id="categoryFormModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">New Category</h2>
+          <button class="modal-close" onclick="closeModal('categoryFormModal')">✕</button>
+        </div>
+        <form id="categoryForm">
+          <div class="form-group">
+            <label class="form-label">Category Name *</label>
+            <input type="text" class="form-input" placeholder="e.g. Education" required id="cName">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Icon</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="iconSelector">
+              <span class="icon-opt" data-icon="🍔" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🍔</span>
+              <span class="icon-opt" data-icon="🚗" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🚗</span>
+              <span class="icon-opt" data-icon="🎬" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🎬</span>
+              <span class="icon-opt" data-icon="⚡" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">⚡</span>
+              <span class="icon-opt" data-icon="💪" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">💪</span>
+              <span class="icon-opt" data-icon="🛍️" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🛍️</span>
+              <span class="icon-opt" data-icon="📚" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">📚</span>
+              <span class="icon-opt" data-icon="✈️" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">✈️</span>
+              <span class="icon-opt" data-icon="🏠" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🏠</span>
+              <span class="icon-opt" data-icon="🎮" style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🎮</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <div class="color-options" id="colorPicker">
+              <div class="color-dot" style="background:#10b981" data-color="#10b981"></div>
+              <div class="color-dot" style="background:#06b6d4" data-color="#06b6d4"></div>
+              <div class="color-dot" style="background:#8b5cf6" data-color="#8b5cf6"></div>
+              <div class="color-dot" style="background:#f59e0b" data-color="#f59e0b"></div>
+              <div class="color-dot" style="background:#ef4444" data-color="#ef4444"></div>
+              <div class="color-dot" style="background:#ec4899" data-color="#ec4899"></div>
+              <div class="color-dot" style="background:#3b82f6" data-color="#3b82f6"></div>
+              <div class="color-dot" style="background:#14b8a6" data-color="#14b8a6"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monthly Budget ($)</label>
+            <input type="number" class="form-input" placeholder="0.00" id="cBudget" min="0">
+          </div>
+          <div style="display:flex;gap:12px;margin-top:24px">
+            <button type="submit" class="btn btn-primary" style="flex:1">Save Category</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('categoryFormModal')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div id="layoutBottomNav"></div>
+
+  <script src="js/components.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('layoutSidebar').innerHTML = renderSidebar('categories');
+    document.getElementById('layoutTopbar').innerHTML = renderTopbar('Categories', 'Organize your spending into categories');
+    document.getElementById('layoutBottomNav').innerHTML = renderBottomNav('categories');
+    injectLayout();
+
+    // Render category cards
+    const grid = document.getElementById('categoryGrid');
+    AppData.categories.forEach(c => {
+      const pct = Math.round((c.spent / c.budget) * 100);
+      const barColor = pct > 80 ? 'var(--accent-red)' : pct > 50 ? 'var(--accent-orange)' : c.color;
+      grid.innerHTML += `
+      <div class="category-card fade-in">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div class="category-icon" style="background:${c.color}20;color:${c.color}">${c.icon}</div>
+          <div>
+            <div style="font-weight:600;font-size:16px">${c.name}</div>
+            <div style="font-size:12px;color:var(--text-muted)">${pct}% of budget used</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+          <span style="color:var(--text-secondary)">Spent: <strong style="color:var(--text-primary)">${formatCurrency(c.spent)}</strong></span>
+          <span style="color:var(--text-muted)">Budget: ${formatCurrency(c.budget)}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${barColor}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:12px">
+          <span style="font-size:12px;color:var(--text-muted)">Remaining: ${formatCurrency(c.budget - c.spent)}</span>
+          <button class="btn btn-sm btn-secondary" style="padding:4px 12px;font-size:12px" onclick="showToast('Edit coming soon','warning')">Edit</button>
+        </div>
+      </div>`;
+    });
+
+    // Icon selector
+    let selectedIcon = '🍔';
+    document.querySelectorAll('.icon-opt').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.icon-opt').forEach(e => e.style.borderColor = 'transparent');
+        el.style.borderColor = 'var(--accent-emerald)';
+        selectedIcon = el.dataset.icon;
+      });
+    });
+
+    // Color picker
+    let selectedColor = '#10b981';
+    document.querySelectorAll('.color-dot').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.color-dot').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+        selectedColor = el.dataset.color;
+      });
+    });
+
+    // Form submit
+    document.getElementById('categoryForm').addEventListener('submit', e => {
+      e.preventDefault();
+      showToast('Category created successfully!');
+      closeModal('categoryFormModal');
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>
