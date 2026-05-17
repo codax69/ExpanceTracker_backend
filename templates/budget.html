@@ -1,0 +1,266 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExpenseIQ — Budget</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.9);
+      transition: all 0.3s ease;
+    }
+    .modal-overlay.open .modal {
+      transform: scale(1);
+    }
+  </style>
+</head>
+<body>
+  <div id="layoutSidebar"></div>
+  <div class="main-content">
+    <div id="layoutTopbar"></div>
+    <div class="page fade-in">
+      
+      <!-- Top KPIs / Monthly Budget / Progress -->
+      <div class="kpi-grid">
+        <div class="kpi-card purple"><div class="kpi-icon purple">🎯</div><div class="kpi-label">Total Budget</div><div class="kpi-value" id="kpiTotalBudget">$0</div></div>
+        <div class="kpi-card orange"><div class="kpi-icon orange">💸</div><div class="kpi-label">Total Spent</div><div class="kpi-value" id="kpiTotalSpent">$0</div></div>
+        <div class="kpi-card emerald"><div class="kpi-icon emerald">💰</div><div class="kpi-label">Remaining Budget</div><div class="kpi-value" id="kpiRemainingBudget">$0</div></div>
+        <div class="kpi-card cyan"><div class="kpi-icon cyan">📈</div><div class="kpi-label">Saving Ratio</div><div class="kpi-value" id="kpiSavingRatio">0%</div></div>
+      </div>
+
+      <!-- Set Budget -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-header">
+          <div class="card-title">Set Budget</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('budgetModal')">+ New Budget</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Category</th><th>Budget</th><th>Spent</th><th>Remaining</th><th>Progress</th></tr></thead>
+            <tbody id="budgetTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Budget Progress -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-header"><div class="card-title">Budget Progress</div></div>
+        <div class="card-body" id="budgetProgressContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:16px; padding:16px;">
+          <!-- Dynamic progress cards will go here -->
+        </div>
+      </div>
+
+      <!-- Budget History -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-header"><div class="card-title">Budget History</div></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Month</th><th>Set Budget</th><th>Actual Spent</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>April 2026</td><td>$2,000</td><td>$1,850</td><td><span class="badge badge-emerald">Under Budget</span></td></tr>
+              <tr><td>March 2026</td><td>$2,000</td><td>$2,100</td><td><span class="badge badge-orange">Over Budget</span></td></tr>
+              <tr><td>February 2026</td><td>$1,800</td><td>$1,750</td><td><span class="badge badge-emerald">Under Budget</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Set Budget Modal -->
+  <div class="modal-overlay" id="budgetModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Set Category Budget</h2>
+        <button class="modal-close" onclick="closeModal('budgetModal')">✕</button>
+      </div>
+      <form id="budgetForm">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="bCategory" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Timeframe</label>
+          <select class="form-select" id="bTimeframe" required>
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="daily">Daily</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount ($)</label>
+          <input type="number" class="form-input" id="bAmount" required min="1" step="0.01" placeholder="e.g. 100">
+        </div>
+        <div style="display:flex;gap:12px;margin-top:24px">
+          <button type="submit" class="btn btn-primary" style="flex:1">Save Budget</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('budgetModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="layoutBottomNav"></div>
+  <script src="{% static 'js/components.js' %}?v=2.0"></script>
+  <script src="{% static 'js/app.js' %}?v=2.0"></script>
+  <script>
+    document.getElementById('layoutSidebar').innerHTML = renderSidebar('budget');
+    document.getElementById('layoutTopbar').innerHTML = renderTopbar('Budget', 'Plan and monitor your spending limits');
+    document.getElementById('layoutBottomNav').innerHTML = renderBottomNav('budget');
+    
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    // Load categories from localStorage if available
+    const savedCategories = localStorage.getItem('categories');
+    if (savedCategories) {
+      AppData.categories = JSON.parse(savedCategories);
+    }
+    
+    // Populate Categories Dropdown
+    const catSelect = document.getElementById('bCategory');
+    AppData.categories.forEach(c => {
+      catSelect.innerHTML += `<option value="${c.name}">${c.icon} ${c.name}</option>`;
+    });
+
+    function renderBudgets() {
+      const tbody = document.getElementById('budgetTableBody');
+      tbody.innerHTML = '';
+      let totalBudget = 0;
+      let totalSpent = 0;
+      
+      AppData.categories.forEach(c => {
+        totalBudget += c.budget;
+        totalSpent += c.spent;
+        const progress = Math.min((c.spent / c.budget) * 100, 100).toFixed(0);
+        const remaining = c.budget - c.spent;
+        
+        tbody.innerHTML += `
+          <tr>
+            <td><span class="badge badge-cyan" style="background:${c.color}20; color:${c.color}">${c.icon} ${c.name}</span></td>
+            <td>$${c.budget.toLocaleString()}</td>
+            <td>$${c.spent.toLocaleString()}</td>
+            <td style="color:${remaining >= 0 ? 'var(--accent-emerald)' : 'var(--accent-red)'}">$${remaining >= 0 ? remaining.toLocaleString() : 0}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden">
+                  <div style="height:100%;width:${progress}%;background:${progress > 90 ? 'var(--accent-red)' : 'var(--accent-primary)'}"></div>
+                </div>
+                <span style="font-size:12px;color:var(--text-secondary)">${progress}%</span>
+              </div>
+            </td>
+          </tr>`;
+      });
+      
+      document.getElementById('kpiTotalBudget').textContent = '$' + totalBudget.toLocaleString();
+      document.getElementById('kpiTotalSpent').textContent = '$' + totalSpent.toLocaleString();
+      const remainingBudget = totalBudget - totalSpent;
+      document.getElementById('kpiRemainingBudget').textContent = '$' + (remainingBudget >= 0 ? remainingBudget.toLocaleString() : '0');
+      const savingRatio = totalBudget > 0 ? ((remainingBudget / totalBudget) * 100).toFixed(1) : 0;
+      document.getElementById('kpiSavingRatio').textContent = (savingRatio > 0 ? savingRatio : 0) + '%';
+      
+      renderBudgetProgress();
+    }
+
+    function renderBudgetProgress() {
+      const container = document.getElementById('budgetProgressContainer');
+      container.innerHTML = '';
+      
+      AppData.categories.forEach(c => {
+        if (!c.timeframeBudgets) {
+          c.timeframeBudgets = { monthly: c.budget }; // Default to monthly
+        }
+        
+        for (const [timeframe, amount] of Object.entries(c.timeframeBudgets)) {
+          // Calculate spent for this timeframe (simulated for now)
+          let timeframeSpent = c.spent;
+          if (timeframe === 'weekly') timeframeSpent = Math.round(c.spent / 4.33);
+          if (timeframe === 'daily') timeframeSpent = Math.round(c.spent / 30);
+          
+          const progress = Math.min((timeframeSpent / amount) * 100, 100).toFixed(0);
+          
+          container.innerHTML += `
+            <div style="padding:16px; background:var(--bg-hover); border-radius:var(--radius-md); border:1px solid var(--glass-border);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-weight:600; color:var(--text-primary);">${c.icon} ${c.name}</span>
+                <span class="badge badge-cyan" style="text-transform:capitalize;">${timeframe}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary); margin-bottom:6px;">
+                <span>Spent: $${timeframeSpent}</span>
+                <span>Budget: $${amount}</span>
+              </div>
+              <div style="height:6px; background:var(--bg-card); border-radius:3px; overflow:hidden;">
+                <div style="height:100%; width:${progress}%; background:${progress > 90 ? 'var(--accent-red)' : 'var(--accent-primary)'}; transition:width 0.3s;"></div>
+              </div>
+              <div style="text-align:right; font-size:12px; color:var(--text-muted); margin-top:4px;">${progress}%</div>
+            </div>
+          `;
+        }
+      });
+    }
+    
+    renderBudgets();
+
+    document.getElementById('budgetForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const catName = document.getElementById('bCategory').value;
+      const timeframe = document.getElementById('bTimeframe').value;
+      let amount = parseFloat(document.getElementById('bAmount').value);
+      
+      const catIndex = AppData.categories.findIndex(c => c.name === catName);
+      if (catIndex > -1) {
+        const cat = AppData.categories[catIndex];
+        if (!cat.timeframeBudgets) cat.timeframeBudgets = {};
+        
+        // Save the specific timeframe budget
+        cat.timeframeBudgets[timeframe] = amount;
+        
+        // Also update the main monthly budget for the table (normalized)
+        let normalizedMonthly = amount;
+        if (timeframe === 'weekly') normalizedMonthly = amount * 4.33;
+        if (timeframe === 'daily') normalizedMonthly = amount * 30;
+        
+        // If updating monthly, or if it didn't have a monthly budget yet, update the main one
+        if (timeframe === 'monthly' || !cat.timeframeBudgets['monthly']) {
+          cat.budget = Math.round(normalizedMonthly);
+        }
+        
+        localStorage.setItem('categories', JSON.stringify(AppData.categories));
+        renderBudgets();
+        closeModal('budgetModal');
+        showToast(`Budget for ${catName} (${timeframe}) updated!`, 'success');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -28,9 +28,9 @@ from api.views.auth_views import login_view, register_view, logout_view, profile
 urlpatterns = [
     path('', login_required(TemplateView.as_view(template_name='index.html')), name='home'),
     path('expenses/', login_required(TemplateView.as_view(template_name='expenses.html')), name='expenses'),
-    path('income/', login_required(TemplateView.as_view(template_name='income.html')), name='income'),
+    path('budget/', login_required(TemplateView.as_view(template_name='budget.html')), name='budget'),
     path('categories/', login_required(TemplateView.as_view(template_name='categories.html')), name='categories'),
-    path('reports/', login_required(TemplateView.as_view(template_name='reports.html')), name='reports'),
+
     path('settings/', login_required(TemplateView.as_view(template_name='settings.html')), name='settings'),
     path('profile/', profile_view, name='profile'),
     
