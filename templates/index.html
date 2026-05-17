@@ -8,7 +8,7 @@
   <meta name="description" content="ExpenseIQ - Premium Financial Dashboard for tracking expenses, income, and budgets">
   <title>ExpenseIQ — Dashboard</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 
 <body>
@@ -83,7 +83,7 @@
               <div class="card-subtitle">Last 6 months overview</div>
             </div>
           </div>
-          <div class="chart-container"><canvas id="monthlyBarChart"></canvas></div>
+          <div class="chart-container" id="monthlyBarChart"></div>
         </div>
         <div class="card fade-in">
           <div class="card-header">
@@ -92,7 +92,7 @@
               <div class="card-subtitle">This week vs previous week</div>
             </div>
           </div>
-          <div class="chart-container"><canvas id="weeklyLineChart"></canvas></div>
+          <div class="chart-container" id="weeklyLineChart"></div>
         </div>
       </div>
 
@@ -104,7 +104,7 @@
               <div class="card-subtitle">Current month breakdown</div>
             </div>
           </div>
-          <div class="chart-container"><canvas id="categoryPieChart"></canvas></div>
+          <div class="chart-container" id="categoryPieChart"></div>
         </div>
         <div class="card fade-in">
           <div class="card-header">
@@ -113,7 +113,7 @@
               <div class="card-subtitle">6 month trend</div>
             </div>
           </div>
-          <div class="chart-container"><canvas id="incomeExpenseChart"></canvas></div>
+          <div class="chart-container" id="incomeExpenseChart"></div>
         </div>
       </div>
 
@@ -186,8 +186,9 @@
 
   <div id="layoutBottomNav"></div>
 
-  <script src="{% static 'js/components.js' %}?v=2.0"></script>
-  <script src="{% static 'js/app.js' %}?v=2.0"></script>
+  <script src="{% static 'js/auth.js' %}"></script>
+  <script src="{% static 'js/components.js' %}?v=3.0"></script>
+  <script src="{% static 'js/app.js' %}?v=3.0"></script>
   <script>
     // Inject layout
     document.getElementById('layoutSidebar').innerHTML = renderSidebar('dashboard');
@@ -228,85 +229,119 @@
     // Charts
     const gridColor = () => document.body.classList.contains('light-mode') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
     const textColor = () => document.body.classList.contains('light-mode') ? '#64648a' : '#8a8a9a';
-    const chartDefaults = () => ({
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: gridColor() }, ticks: { color: textColor(), font: { family: 'Inter', size: 11 } } },
-        y: { grid: { color: gridColor() }, ticks: { color: textColor(), font: { family: 'Inter', size: 11 } } }
+    const chartMode = () => document.body.classList.contains('light-mode') ? 'light' : 'dark';
+
+    const apexDefaults = () => ({
+      chart: {
+        background: 'transparent',
+        toolbar: { show: false },
+        parentHeightOffset: 0,
+        animations: { enabled: true }
+      },
+      theme: { mode: chartMode() },
+      grid: {
+        borderColor: gridColor(),
+        strokeDashArray: 4,
+        padding: { top: 0, right: 0, bottom: 0, left: 10 }
+      },
+      dataLabels: { enabled: false },
+      tooltip: { theme: chartMode() },
+      xaxis: {
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: { style: { colors: textColor(), fontFamily: 'Inter' } }
+      },
+      yaxis: {
+        labels: { style: { colors: textColor(), fontFamily: 'Inter' } }
+      },
+      legend: {
+        labels: { colors: textColor(), useSeriesColors: false },
+        fontFamily: 'Inter'
       }
     });
 
     // Monthly Bar Chart
-    const monthlyBar = new Chart(document.getElementById('monthlyBarChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
-        datasets: [{
-          data: [1850, 2100, 1750, 1980, 1620, 591],
-          backgroundColor: ['rgba(16,185,129,0.3)', 'rgba(16,185,129,0.4)', 'rgba(16,185,129,0.3)', 'rgba(16,185,129,0.5)', 'rgba(16,185,129,0.4)', 'rgba(16,185,129,0.7)'],
-          borderColor: '#10b981', borderWidth: 1, borderRadius: 8, barPercentage: 0.6
-        }]
-      },
-      options: chartDefaults()
-    });
+    const monthlyBarOpts = {
+      ...apexDefaults(),
+      series: [{ name: 'Expenses', data: [1850, 2100, 1750, 1980, 1620, 591] }],
+      chart: { type: 'bar', height: '100%', parentHeightOffset: 0, background: 'transparent', toolbar: { show: false } },
+      plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+      colors: ['#10b981'],
+      xaxis: { ...apexDefaults().xaxis, categories: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'] }
+    };
+    const monthlyBar = new ApexCharts(document.querySelector("#monthlyBarChart"), monthlyBarOpts);
+    monthlyBar.render();
 
     // Weekly Line Chart
-    const weeklyLine = new Chart(document.getElementById('weeklyLineChart'), {
-      type: 'line',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [
-          { label: 'This Week', data: [45, 80, 35, 120, 65, 90, 40], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#8b5cf6' },
-          { label: 'Last Week', data: [60, 55, 70, 90, 50, 110, 75], borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.05)', fill: true, tension: 0.4, borderDash: [5, 5], pointRadius: 3, pointBackgroundColor: '#06b6d4' }
-        ]
-      },
-      options: { ...chartDefaults(), plugins: { legend: { display: true, labels: { color: textColor(), font: { family: 'Inter', size: 11 }, usePointStyle: true, pointStyle: 'circle' } } } }
-    });
+    const weeklyLineOpts = {
+      ...apexDefaults(),
+      series: [
+        { name: 'This Week', data: [45, 80, 35, 120, 65, 90, 40] },
+        { name: 'Last Week', data: [60, 55, 70, 90, 50, 110, 75] }
+      ],
+      chart: { type: 'area', height: '100%', parentHeightOffset: 0, background: 'transparent', toolbar: { show: false } },
+      colors: ['#8b5cf6', '#06b6d4'],
+      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
+      stroke: { curve: 'smooth', width: 2, dashArray: [0, 5] },
+      xaxis: { ...apexDefaults().xaxis, categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+      legend: { ...apexDefaults().legend, position: 'top', horizontalAlign: 'right' }
+    };
+    const weeklyLine = new ApexCharts(document.querySelector("#weeklyLineChart"), weeklyLineOpts);
+    weeklyLine.render();
 
     // Category Pie Chart
-    const catPie = new Chart(document.getElementById('categoryPieChart'), {
-      type: 'doughnut',
-      data: {
-        labels: AppData.categories.map(c => c.name),
-        datasets: [{
-          data: AppData.categories.map(c => c.spent),
-          backgroundColor: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'],
-          borderWidth: 0, hoverOffset: 8
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, cutout: '65%',
-        plugins: { legend: { position: 'right', labels: { color: textColor(), font: { family: 'Inter', size: 12 }, padding: 16, usePointStyle: true, pointStyle: 'circle' } } }
-      }
-    });
+    const catPieOpts = {
+      ...apexDefaults(),
+      series: AppData.categories.map(c => c.spent),
+      labels: AppData.categories.map(c => c.name),
+      chart: { type: 'donut', height: '100%', parentHeightOffset: 0, background: 'transparent' },
+      colors: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'],
+      stroke: { show: false },
+      plotOptions: { pie: { donut: { size: '65%' } } },
+      legend: { ...apexDefaults().legend, position: 'right' }
+    };
+    const catPie = new ApexCharts(document.querySelector("#categoryPieChart"), catPieOpts);
+    catPie.render();
 
     // Income vs Expense Area Chart
-    const incExpChart = new Chart(document.getElementById('incomeExpenseChart'), {
-      type: 'line',
-      data: {
-        labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
-        datasets: [
-          { label: 'Income', data: [5800, 6100, 5900, 6400, 6800, 7190], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#10b981' },
-          { label: 'Expenses', data: [1850, 2100, 1750, 1980, 1620, 591], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#8b5cf6' }
-        ]
-      },
-      options: { ...chartDefaults(), plugins: { legend: { display: true, labels: { color: textColor(), font: { family: 'Inter', size: 11 }, usePointStyle: true, pointStyle: 'circle' } } } }
-    });
+    const incExpChartOpts = {
+      ...apexDefaults(),
+      series: [
+        { name: 'Income', data: [5800, 6100, 5900, 6400, 6800, 7190] },
+        { name: 'Expenses', data: [1850, 2100, 1750, 1980, 1620, 591] }
+      ],
+      chart: { type: 'area', height: '100%', parentHeightOffset: 0, background: 'transparent', toolbar: { show: false } },
+      colors: ['#10b981', '#8b5cf6'],
+      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
+      stroke: { curve: 'smooth', width: 2 },
+      xaxis: { ...apexDefaults().xaxis, categories: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'] },
+      legend: { ...apexDefaults().legend, position: 'top', horizontalAlign: 'right' }
+    };
+    const incExpChart = new ApexCharts(document.querySelector("#incomeExpenseChart"), incExpChartOpts);
+    incExpChart.render();
 
     // Update charts on theme change
     function updateChartsTheme() {
-      [monthlyBar, weeklyLine, incExpChart].forEach(c => {
-        if (c.options.scales) {
-          c.options.scales.x.grid.color = gridColor();
-          c.options.scales.x.ticks.color = textColor();
-          c.options.scales.y.grid.color = gridColor();
-          c.options.scales.y.ticks.color = textColor();
-        }
-        c.update();
+      const mode = chartMode();
+      const gridClr = gridColor();
+      const textClr = textColor();
+      const updateOptions = {
+        theme: { mode: mode },
+        tooltip: { theme: mode },
+        grid: { borderColor: gridClr },
+        xaxis: { labels: { style: { colors: textClr } } },
+        yaxis: { labels: { style: { colors: textClr } } },
+        legend: { labels: { colors: textClr } }
+      };
+      monthlyBar.updateOptions(updateOptions);
+      weeklyLine.updateOptions(updateOptions);
+      incExpChart.updateOptions(updateOptions);
+      
+      catPie.updateOptions({
+        theme: { mode: mode },
+        tooltip: { theme: mode },
+        legend: { labels: { colors: textClr } }
       });
-      catPie.options.plugins.legend.labels.color = textColor();
-      catPie.update();
     }
 
     // Quick expense form

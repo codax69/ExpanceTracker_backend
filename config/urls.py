@@ -23,7 +23,11 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 from django.contrib.auth.decorators import login_required
-from api.views.auth_views import login_view, register_view, logout_view, profile_view, password_reset_view
+from api.views.auth_views import (
+    login_view, register_view, logout_view, profile_view, password_reset_view,
+    JWTRegisterView, JWTLoginView, JWTRefreshView, JWTLogoutView,
+    JWTMeView, JWTChangePasswordView,
+)
 
 urlpatterns = [
     path('', login_required(TemplateView.as_view(template_name='index.html')), name='home'),
@@ -33,17 +37,25 @@ urlpatterns = [
 
     path('settings/', login_required(TemplateView.as_view(template_name='settings.html')), name='settings'),
     path('profile/', profile_view, name='profile'),
-    
-    # Auth Routes
+
+    # Template-based Auth Routes (Session)
     path('login/', login_view, name='login'),
     path('register/', register_view, name='register'),
     path('logout/', logout_view, name='logout'),
     path('password-reset/', password_reset_view, name='password_reset'),
 
+    # ───── JWT API Auth Routes ─────
+    path('api/v1/auth/register', JWTRegisterView.as_view(), name='jwt-register'),
+    path('api/v1/auth/login', JWTLoginView.as_view(), name='jwt-login'),
+    path('api/v1/auth/refresh', JWTRefreshView.as_view(), name='jwt-refresh'),
+    path('api/v1/auth/logout', JWTLogoutView.as_view(), name='jwt-logout'),
+    path('api/v1/auth/me', JWTMeView.as_view(), name='jwt-me'),
+    path('api/v1/auth/change-password', JWTChangePasswordView.as_view(), name='jwt-change-password'),
+
     path('admin/', admin.site.urls),
     path('health', health_check),
     path('api/v1/', include('api.urls')),
-    
+
     # Swagger docs
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

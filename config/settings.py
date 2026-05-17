@@ -1,10 +1,11 @@
 """
 Django settings for ExpenseIQ project.
-SQLite database, DRF, CORS headers.
+SQLite database, DRF, CORS headers, JWT auth, rate limiting.
 """
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -26,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Third-party
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',  # Token blacklisting for logout/rotation
     'corsheaders',
     'django_filters',
     'drf_spectacular',
@@ -42,6 +44,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom rate limiter
+    'api.middleware.RateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -72,6 +76,14 @@ DATABASES = {
     }
 }
 
+# ── Cache (for rate limiting) ──
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'expenseiq-ratelimit',
+    }
+}
+
 # ── Internationalization ──
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -92,9 +104,17 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:5500').split(',')
 CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
 CORS_ALLOW_HEADERS = ['accept', 'authorization', 'content-type', 'origin', 'x-requested-with']
+CORS_ALLOW_CREDENTIALS = True  # Required for cookies to be sent cross-origin
 
 # ── Django REST Framework ──
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'api.authentication.CookieJWTAuthentication',   # JWT via HTTP-only cookies (primary)
+        'rest_framework.authentication.SessionAuthentication',  # Fallback for admin/browsable API
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_PAGINATION_CLASS': None,
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -113,11 +133,63 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': os.getenv('RATE_LIMIT', '100/hour'),
     },
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
     'EXCEPTION_HANDLER': 'api.utils.custom_exception_handler',
 }
+
+# ═══════════════════════════════════════════════
+#  JWT CONFIGURATION (SimpleJWT)
+# ═══════════════════════════════════════════════
+SIMPLE_JWT = {
+    # Token lifetimes
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),       # Short-lived access token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),          # Long-lived refresh token
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=15),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
+
+    # Token rotation — issue new refresh on every refresh request
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,   # Blacklist old refresh tokens after rotation
+
+    # Security
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'UPDATE_LAST_LOGIN': True,          # Update user.last_login on token creation
+
+    # Token claims
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',                # Unique token ID for blacklisting
+}
+
+# ── Cookie names for JWT tokens ──
+JWT_COOKIE_NAMES = {
+    'access': 'access_token',
+    'refresh': 'refresh_token',
+}
+
+# ═══════════════════════════════════════════════
+#  RATE LIMIT CONFIGURATION
+# ═══════════════════════════════════════════════
+RATE_LIMIT_CONFIG = {
+    'GLOBAL_RATE': '200/minute',         # 200 requests/min for normal endpoints
+    'AUTH_RATE': '10/minute',            # 10 requests/min for auth endpoints (brute-force protection)
+    'AUTH_PATHS': ['/api/v1/auth/'],     # Paths that use the stricter AUTH_RATE
+    'BLOCK_DURATION': 300,               # Block IP for 5 minutes after exceeding limit
+}
+
+# ── Security Headers ──
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000      # 1 year HSTS
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # ── File Uploads ──
 MEDIA_URL = '/media/'
@@ -131,7 +203,8 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
-# ── Authentication ──
+
+# ── Authentication Redirects ──
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
