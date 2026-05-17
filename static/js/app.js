@@ -107,8 +107,7 @@ function formatCurrency(n) {
 }
 
 // --- Sample Data Store ---
-const AppData = {
-  expenses: [
+const defaultExpenses = [
     { id: 1, title: 'Grocery Shopping', amount: 142, category: 'Food', method: 'Credit Card', date: '2026-05-07', status: 'completed' },
     { id: 2, title: 'Netflix Subscription', amount: 15, category: 'Entertainment', method: 'Debit Card', date: '2026-05-06', status: 'completed' },
     { id: 3, title: 'Electricity Bill', amount: 89, category: 'Utilities', method: 'Bank Transfer', date: '2026-05-05', status: 'pending' },
@@ -119,7 +118,12 @@ const AppData = {
     { id: 8, title: 'Internet Bill', amount: 75, category: 'Utilities', method: 'Auto Pay', date: '2026-04-30', status: 'completed' },
     { id: 9, title: 'Restaurant Dinner', amount: 86, category: 'Food', method: 'Credit Card', date: '2026-04-29', status: 'completed' },
     { id: 10, title: 'Spotify Premium', amount: 10, category: 'Entertainment', method: 'Debit Card', date: '2026-04-28', status: 'completed' },
-  ],
+  ];
+
+const savedExpenses = localStorage.getItem('expenses');
+
+const AppData = {
+  expenses: savedExpenses ? JSON.parse(savedExpenses) : defaultExpenses,
   income: [
     { id: 1, source: 'Salary', amount: 5200, date: '2026-05-01', method: 'Bank Transfer', desc: 'Monthly salary' },
     { id: 2, source: 'Freelance', amount: 1200, date: '2026-05-03', method: 'PayPal', desc: 'Web design project' },
