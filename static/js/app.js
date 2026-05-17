@@ -26,6 +26,7 @@ function initSidebar() {
   const sidebar = document.getElementById('sidebar');
   const collapseBtn = document.getElementById('collapseBtn');
   const menuBtn = document.getElementById('menuBtn');
+  if (!sidebar) return;
   if (collapseBtn) {
     collapseBtn.addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
@@ -45,18 +46,25 @@ function initSidebar() {
   if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 1024) {
     sidebar.classList.add('collapsed');
   }
-  // Set active nav
-  const page = location.pathname.split('/').pop() || 'index.html';
+  // Set active nav based on current URL path
+  const currentPath = location.pathname;
   document.querySelectorAll('.nav-item').forEach(item => {
-    if (item.getAttribute('href') === page) item.classList.add('active');
+    const href = item.getAttribute('href');
+    if (href === currentPath || (href === '/' && currentPath === '/')) {
+      item.classList.add('active');
+    }
   });
   document.querySelectorAll('.bottom-nav-item').forEach(item => {
-    if (item.getAttribute('href') === page) item.classList.add('active');
+    const href = item.getAttribute('href');
+    if (href === currentPath || (href === '/' && currentPath === '/')) {
+      item.classList.add('active');
+    }
   });
 }
 
 // --- Animated Counter ---
 function animateCounter(el, target, prefix = '', suffix = '', duration = 1200) {
+  if (!el) return;
   let start = 0;
   const step = (timestamp) => {
     if (!start) start = timestamp;
@@ -145,4 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initSidebar();
   initToggles();
+
+  // Initialize JWT auth on protected pages
+  if (typeof Auth !== 'undefined') {
+    Auth.init();
+  }
 });
