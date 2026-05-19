@@ -84,6 +84,8 @@ class ExpenseListCreateView(APIView):
                 ExpenseSerializer(expense).data,
                 message='Expense created successfully'
             )
+        print("DEBUG request.data:", request.data)
+        print("DEBUG errors:", serializer.errors)
         return ApiResponse.error('Validation failed', 400, serializer.errors)
 
 

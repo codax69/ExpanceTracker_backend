@@ -1,424 +1,683 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ExpenseIQ - Premium Financial Dashboard for tracking expenses, income, and budgets"
+    />
+    <title>ExpenseIQ — Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ExpenseIQ - Premium Financial Dashboard for tracking expenses, income, and budgets">
-  <title>ExpenseIQ — Dashboard</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-</head>
-
-<body>
-  <div id="layoutSidebar"></div>
-  <div class="main-content" id="mainContent">
-    <div id="layoutTopbar"></div>
-    <div class="page fade-in" id="dashboardPage">
-
-      <!-- Dashboard Filter -->
-      <div class="dashboard-filter-bar fade-in" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; background: var(--bg-card); padding: 16px 20px; border-radius: var(--radius-lg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-sm);">
-        <div class="filter-tabs" id="dashboardTimeFilters">
-          <span class="filter-tab" data-range="today">Today</span>
-          <span class="filter-tab" data-range="7d">7 Days</span>
-          <span class="filter-tab active" data-range="30d">30 Days</span>
-          <span class="filter-tab" data-range="month">This Month</span>
-          <span class="filter-tab" data-range="custom">Custom</span>
+  <body>
+    <div id="layoutSidebar"></div>
+    <div class="main-content" id="mainContent">
+      <div id="layoutTopbar"></div>
+      <div class="page fade-in" id="dashboardPage">
+        <!-- Dashboard Filter -->
+        <div
+          class="dashboard-filter-bar fade-in"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            background: var(--bg-card);
+            padding: 16px 20px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-sm);
+          "
+        >
+          <div class="filter-tabs" id="dashboardTimeFilters">
+            <span class="filter-tab" data-range="today">Today</span>
+            <span class="filter-tab" data-range="7d">7 Days</span>
+            <span class="filter-tab active" data-range="30d">30 Days</span>
+            <span class="filter-tab" data-range="month">This Month</span>
+            <span class="filter-tab" data-range="custom">Custom</span>
+          </div>
+          <div
+            class="custom-date-range"
+            id="customDateRange"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              opacity: 0.5;
+              pointer-events: none;
+              transition: all 0.3s ease;
+            "
+          >
+            <input
+              type="date"
+              class="form-input"
+              id="filterStartDate"
+              style="
+                padding: 6px 12px;
+                font-size: 13px;
+                height: 32px;
+                border-radius: var(--radius-md);
+              "
+            />
+            <span style="color: var(--text-secondary); font-size: 13px"
+              >to</span
+            >
+            <input
+              type="date"
+              class="form-input"
+              id="filterEndDate"
+              style="
+                padding: 6px 12px;
+                font-size: 13px;
+                height: 32px;
+                border-radius: var(--radius-md);
+              "
+            />
+            <button
+              class="btn btn-primary"
+              id="applyFilterBtn"
+              style="
+                padding: 6px 16px;
+                font-size: 13px;
+                height: 32px;
+                border-radius: var(--radius-md);
+              "
+            >
+              Apply
+            </button>
+          </div>
         </div>
-        <div class="custom-date-range" id="customDateRange" style="display: flex; align-items: center; gap: 12px; opacity: 0.5; pointer-events: none; transition: all 0.3s ease;">
-          <input type="date" class="form-input" id="filterStartDate" style="padding: 6px 12px; font-size: 13px; height: 32px; border-radius: var(--radius-md);">
-          <span style="color: var(--text-secondary); font-size: 13px;">to</span>
-          <input type="date" class="form-input" id="filterEndDate" style="padding: 6px 12px; font-size: 13px; height: 32px; border-radius: var(--radius-md);">
-          <button class="btn btn-primary" id="applyFilterBtn" style="padding: 6px 16px; font-size: 13px; height: 32px; border-radius: var(--radius-md);">Apply</button>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card emerald fade-in stagger-1">
+            <div class="kpi-icon emerald">💰</div>
+            <div class="kpi-label">Total Budget</div>
+            <div class="kpi-value" id="kpiBudget">$0</div>
+            <span class="kpi-change up">▲ 12.5% vs last month</span>
+          </div>
+          <div class="kpi-card purple fade-in stagger-2">
+            <div class="kpi-icon purple">📊</div>
+            <div class="kpi-label">Total Expenses</div>
+            <div class="kpi-value" id="kpiExpense">$0</div>
+            <span class="kpi-change down">▼ 3.2% vs last month</span>
+          </div>
+          <div class="kpi-card cyan fade-in stagger-3">
+            <div class="kpi-icon cyan">🏦</div>
+            <div class="kpi-label">Remaining Balance</div>
+            <div class="kpi-value" id="kpiBalance">$0</div>
+            <span class="kpi-change up">▲ 8.1% vs last month</span>
+          </div>
+          <div class="kpi-card orange fade-in stagger-4">
+            <div class="kpi-icon orange">📅</div>
+            <div class="kpi-label">Monthly Expense</div>
+            <div class="kpi-value" id="kpiMonthly">$0</div>
+            <span class="kpi-change down">▼ 5.4% vs last month</span>
+          </div>
+          <div class="kpi-card emerald fade-in stagger-5">
+            <div class="kpi-icon emerald">📈</div>
+            <div class="kpi-label">Savings Rate</div>
+            <div class="kpi-value" id="kpiSavings">0%</div>
+            <span class="kpi-change up">▲ 2.3% improvement</span>
+          </div>
+          <div class="kpi-card purple fade-in stagger-6">
+            <div class="kpi-icon purple">⚡</div>
+            <div class="kpi-label">Weekly Expense</div>
+            <div class="kpi-value" id="kpiWeekly">$0</div>
+            <span class="kpi-change up">▲ 1.8% vs last week</span>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-grid">
+          <div class="card fade-in">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Monthly Expenses</div>
+                <div class="card-subtitle">Last 6 months overview</div>
+              </div>
+            </div>
+            <div class="chart-container" id="monthlyBarChart"></div>
+          </div>
+          <div class="card fade-in">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Weekly Comparison</div>
+                <div class="card-subtitle">This week vs previous week</div>
+              </div>
+            </div>
+            <div class="chart-container" id="weeklyLineChart"></div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card fade-in">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Spending by Category</div>
+                <div class="card-subtitle">Current month breakdown</div>
+              </div>
+            </div>
+            <div class="chart-container" id="categoryPieChart"></div>
+          </div>
+          <div class="card fade-in">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Income vs Expenses</div>
+                <div class="card-subtitle">6 month trend</div>
+              </div>
+            </div>
+            <div class="chart-container" id="incomeExpenseChart"></div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card fade-in">
+          <div class="card-header">
+            <div class="card-title">Recent Expenses</div>
+            <a href="{% url 'expenses' %}" class="btn btn-sm btn-secondary"
+              >View All</a
+            >
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Transaction</th>
+                  <th>Category</th>
+                  <th>Date</th>
+                  <th>Method</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recentTransactions"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- KPI Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card emerald fade-in stagger-1">
-          <div class="kpi-icon emerald">💰</div>
-          <div class="kpi-label">Total Budget</div>
-          <div class="kpi-value" id="kpiBudget">$0</div>
-          <span class="kpi-change up">▲ 12.5% vs last month</span>
-        </div>
-        <div class="kpi-card purple fade-in stagger-2">
-          <div class="kpi-icon purple">📊</div>
-          <div class="kpi-label">Total Expenses</div>
-          <div class="kpi-value" id="kpiExpense">$0</div>
-          <span class="kpi-change down">▼ 3.2% vs last month</span>
-        </div>
-        <div class="kpi-card cyan fade-in stagger-3">
-          <div class="kpi-icon cyan">🏦</div>
-          <div class="kpi-label">Remaining Balance</div>
-          <div class="kpi-value" id="kpiBalance">$0</div>
-          <span class="kpi-change up">▲ 8.1% vs last month</span>
-        </div>
-        <div class="kpi-card orange fade-in stagger-4">
-          <div class="kpi-icon orange">📅</div>
-          <div class="kpi-label">Monthly Expense</div>
-          <div class="kpi-value" id="kpiMonthly">$0</div>
-          <span class="kpi-change down">▼ 5.4% vs last month</span>
-        </div>
-        <div class="kpi-card emerald fade-in stagger-5">
-          <div class="kpi-icon emerald">📈</div>
-          <div class="kpi-label">Savings Rate</div>
-          <div class="kpi-value" id="kpiSavings">0%</div>
-          <span class="kpi-change up">▲ 2.3% improvement</span>
-        </div>
-        <div class="kpi-card purple fade-in stagger-6">
-          <div class="kpi-icon purple">⚡</div>
-          <div class="kpi-label">Weekly Expense</div>
-          <div class="kpi-value" id="kpiWeekly">$0</div>
-          <span class="kpi-change up">▲ 1.8% vs last week</span>
-        </div>
-      </div>
+      <!-- Quick Add FAB -->
+      <button
+        class="fab"
+        onclick="openModal('addExpenseModal')"
+        title="Quick Add Expense"
+      >
+        +
+      </button>
 
-      <!-- Charts Row -->
-      <div class="charts-grid">
-        <div class="card fade-in">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Monthly Expenses</div>
-              <div class="card-subtitle">Last 6 months overview</div>
-            </div>
+      <!-- Quick Add Modal -->
+      <div class="modal-overlay" id="addExpenseModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">Quick Add Expense</h2>
+            <button class="modal-close" onclick="closeModal('addExpenseModal')">
+              ✕
+            </button>
           </div>
-          <div class="chart-container" id="monthlyBarChart"></div>
-        </div>
-        <div class="card fade-in">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Weekly Comparison</div>
-              <div class="card-subtitle">This week vs previous week</div>
+          <form id="quickExpenseForm">
+            <div class="form-group">
+              <label class="form-label">Amount ($)</label>
+              <input
+                type="number"
+                class="form-input"
+                placeholder="0.00"
+                required
+                id="qAmount"
+              />
             </div>
-          </div>
-          <div class="chart-container" id="weeklyLineChart"></div>
-        </div>
-      </div>
-
-      <div class="charts-grid">
-        <div class="card fade-in">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Spending by Category</div>
-              <div class="card-subtitle">Current month breakdown</div>
+            <div class="form-group">
+              <label class="form-label">Title</label>
+              <input
+                type="text"
+                class="form-input"
+                placeholder="Expense title"
+                required
+                id="qTitle"
+              />
             </div>
-          </div>
-          <div class="chart-container" id="categoryPieChart"></div>
-        </div>
-        <div class="card fade-in">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Income vs Expenses</div>
-              <div class="card-subtitle">6 month trend</div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="qCategory">
+                <option value="Food">🍔 Food</option>
+                <option value="Transport">🚗 Transport</option>
+                <option value="Entertainment">🎬 Entertainment</option>
+                <option value="Utilities">⚡ Utilities</option>
+                <option value="Health">💪 Health</option>
+                <option value="Shopping">🛍️ Shopping</option>
+              </select>
             </div>
-          </div>
-          <div class="chart-container" id="incomeExpenseChart"></div>
-        </div>
-      </div>
-
-      <!-- Recent Transactions -->
-      <div class="card fade-in">
-        <div class="card-header">
-          <div class="card-title">Recent Expenses</div>
-          <a href="{% url 'expenses' %}" class="btn btn-sm btn-secondary">View All</a>
-        </div>
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Transaction</th>
-                <th>Category</th>
-                <th>Date</th>
-                <th>Method</th>
-                <th>Amount</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="recentTransactions"></tbody>
-          </table>
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="qDate" />
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 24px">
+              <button type="submit" class="btn btn-primary" style="flex: 1">
+                Add Expense
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal('addExpenseModal')"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
 
-    <!-- Quick Add FAB -->
-    <button class="fab" onclick="openModal('addExpenseModal')" title="Quick Add Expense">+</button>
+    <div id="layoutBottomNav"></div>
 
-    <!-- Quick Add Modal -->
-    <div class="modal-overlay" id="addExpenseModal">
-      <div class="modal">
-        <div class="modal-header">
-          <h2 class="modal-title">Quick Add Expense</h2>
-          <button class="modal-close" onclick="closeModal('addExpenseModal')">✕</button>
-        </div>
-        <form id="quickExpenseForm">
-          <div class="form-group">
-            <label class="form-label">Amount ($)</label>
-            <input type="number" class="form-input" placeholder="0.00" required id="qAmount">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Title</label>
-            <input type="text" class="form-input" placeholder="Expense title" required id="qTitle">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Category</label>
-            <select class="form-select" id="qCategory">
-              <option value="Food">🍔 Food</option>
-              <option value="Transport">🚗 Transport</option>
-              <option value="Entertainment">🎬 Entertainment</option>
-              <option value="Utilities">⚡ Utilities</option>
-              <option value="Health">💪 Health</option>
-              <option value="Shopping">🛍️ Shopping</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Date</label>
-            <input type="date" class="form-input" id="qDate">
-          </div>
-          <div style="display:flex;gap:12px;margin-top:24px">
-            <button type="submit" class="btn btn-primary" style="flex:1">Add Expense</button>
-            <button type="button" class="btn btn-secondary" onclick="closeModal('addExpenseModal')">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+    <script src="{% static 'js/auth.js' %}?v=4.1"></script>
+    <script src="{% static 'js/components.js' %}?v=4.1"></script>
+    <script src="{% static 'js/app.js' %}?v=4.1"></script>
+    <script>
+      // Inject layout
+      document.getElementById("layoutSidebar").innerHTML =
+        renderSidebar("dashboard");
+      document.getElementById("layoutTopbar").innerHTML = renderTopbar(
+        "Dashboard",
+        "Welcome back — here's your financial overview",
+      );
+      document.getElementById("layoutBottomNav").innerHTML =
+        renderBottomNav("dashboard");
+      injectLayout("dashboard");
 
-  <div id="layoutBottomNav"></div>
+      // Dashboard initialization
+      async function initDashboard(startDate, endDate) {
+        // Show loading states or keep empty initially
 
-  <script src="{% static 'js/auth.js' %}"></script>
-  <script src="{% static 'js/components.js' %}?v=3.0"></script>
-  <script src="{% static 'js/app.js' %}?v=3.0"></script>
-  <script>
-    // Inject layout
-    document.getElementById('layoutSidebar').innerHTML = renderSidebar('dashboard');
-    document.getElementById('layoutTopbar').innerHTML = renderTopbar('Dashboard', 'Welcome back — here\'s your financial overview');
-    document.getElementById('layoutBottomNav').innerHTML = renderBottomNav('dashboard');
-    injectLayout('dashboard');
+        // Wait for auth to be ready
+        if (typeof Auth !== "undefined") {
+          await Auth.init();
+        }
 
-    // Set default date
-    document.getElementById('qDate').valueAsDate = new Date();
+        // Fetch dynamic data
+        await API.getDashboardData({ startDate, endDate });
+        const chartsData = await API.getChartData();
 
-    // Animate KPI counters
-    setTimeout(() => {
-      animateCounter(document.getElementById('kpiBudget'), 7190, '$');
-      animateCounter(document.getElementById('kpiExpense'), 591, '$');
-      animateCounter(document.getElementById('kpiBalance'), 6599, '$');
-      animateCounter(document.getElementById('kpiMonthly'), 591, '$');
-      animateCounter(document.getElementById('kpiSavings'), 82, '', '%');
-      animateCounter(document.getElementById('kpiWeekly'), 181, '$');
-    }, 200);
+        // Render KPIs
+        if (AppData.kpis) {
+          // Use Budget API if a global budget is set, otherwise fallback to kpis.totalIncome
+          const totalBudget =
+            AppData.budget && AppData.budget.budget > 0
+              ? AppData.budget.budget
+              : AppData.kpis.totalIncome || 0;
 
+          const remainingBalance =
+            AppData.budget && AppData.budget.budget > 0
+              ? AppData.budget.remaining
+              : AppData.kpis.remainingBalance || 0;
 
-    // Recent transactions table
-    const tbody = document.getElementById('recentTransactions');
-    AppData.expenses.slice(0, 7).forEach(e => {
-      const cat = AppData.categories.find(c => c.name === e.category);
-      const badgeClass = e.status === 'completed' ? 'badge-emerald' : 'badge-orange';
-      tbody.innerHTML += `
-        <tr>
-          <td style="color:var(--text-primary);font-weight:500">${e.title}</td>
-          <td><span class="badge badge-cyan">${cat ? cat.icon : '📦'} ${e.category}</span></td>
-          <td>${e.date}</td>
-          <td>${e.method}</td>
-          <td style="color:var(--accent-red);font-weight:600">-$${e.amount}</td>
-          <td><span class="badge ${badgeClass}">${e.status}</span></td>
-        </tr>`;
-    });
+          document.getElementById("kpiBudget").textContent =
+            Settings.formatCurrency(totalBudget);
+          document.getElementById("kpiExpense").textContent =
+            Settings.formatCurrency(AppData.kpis.totalExpense || 0);
+          document.getElementById("kpiBalance").textContent =
+            Settings.formatCurrency(remainingBalance);
+          document.getElementById("kpiMonthly").textContent =
+            Settings.formatCurrency(AppData.kpis.monthlyExpense || 0);
+          animateCounter(
+            document.getElementById("kpiSavings"),
+            AppData.kpis.savingsRate || 0,
+            "",
+            "%",
+          );
+          document.getElementById("kpiWeekly").textContent =
+            Settings.formatCurrency(AppData.kpis.weeklyExpense || 0);
+        }
 
-    // Charts
-    const gridColor = () => document.body.classList.contains('light-mode') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
-    const textColor = () => document.body.classList.contains('light-mode') ? '#64648a' : '#8a8a9a';
-    const chartMode = () => document.body.classList.contains('light-mode') ? 'light' : 'dark';
+        // Render Recent Transactions
+        const tbody = document.getElementById("recentTransactions");
+        tbody.innerHTML = "";
+        if (AppData.expenses && AppData.expenses.length > 0) {
+          AppData.expenses.slice(0, 7).forEach((e) => {
+            const cat = AppData.categories.find(
+              (c) => c.category === e.category || c.name === e.category,
+            );
+            const badgeClass = "badge-emerald"; // API could provide status
+            tbody.innerHTML += `
+            <tr>
+              <td style="color:var(--text-primary);font-weight:500">${e.title}</td>
+              <td><span class="badge badge-cyan">${cat ? cat.icon || "\ud83d\udce6" : "\ud83d\udce6"} ${e.category}</span></td>
+              <td>${Settings.formatDate(e.createdAt)}</td>
+              <td>${e.payment_method || "Cash"}</td>
+              <td style="color:var(--accent-red);font-weight:600">-${Settings.formatCurrency(e.amount)}</td>
+              <td><span class="badge ${badgeClass}">Completed</span></td>
+            </tr>`;
+          });
+        } else {
+          tbody.innerHTML =
+            '<tr><td colspan="6" style="text-align:center">No recent expenses found.</td></tr>';
+        }
 
-    const apexDefaults = () => ({
-      chart: {
-        background: 'transparent',
-        toolbar: { show: false },
-        parentHeightOffset: 0,
-        animations: { enabled: true }
-      },
-      theme: { mode: chartMode() },
-      grid: {
-        borderColor: gridColor(),
-        strokeDashArray: 4,
-        padding: { top: 0, right: 0, bottom: 0, left: 10 }
-      },
-      dataLabels: { enabled: false },
-      tooltip: { theme: chartMode() },
-      xaxis: {
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-        labels: { style: { colors: textColor(), fontFamily: 'Inter' } }
-      },
-      yaxis: {
-        labels: { style: { colors: textColor(), fontFamily: 'Inter' } }
-      },
-      legend: {
-        labels: { colors: textColor(), useSeriesColors: false },
-        fontFamily: 'Inter'
+        // Charts
+        const gridColor = () =>
+          document.body.classList.contains("light-mode")
+            ? "rgba(0,0,0,0.06)"
+            : "rgba(255,255,255,0.06)";
+        const textColor = () =>
+          document.body.classList.contains("light-mode")
+            ? "#64648a"
+            : "#8a8a9a";
+        const chartMode = () =>
+          document.body.classList.contains("light-mode") ? "light" : "dark";
+
+        const apexDefaults = () => ({
+          chart: {
+            background: "transparent",
+            toolbar: { show: false },
+            parentHeightOffset: 0,
+            animations: { enabled: true },
+          },
+          theme: { mode: chartMode() },
+          grid: {
+            borderColor: gridColor(),
+            strokeDashArray: 4,
+            padding: { top: 0, right: 0, bottom: 0, left: 10 },
+          },
+          dataLabels: { enabled: false },
+          tooltip: { theme: chartMode() },
+          xaxis: {
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            labels: { style: { colors: textColor(), fontFamily: "Inter" } },
+          },
+          yaxis: {
+            labels: { style: { colors: textColor(), fontFamily: "Inter" } },
+          },
+          legend: {
+            labels: { colors: textColor(), useSeriesColors: false },
+            fontFamily: "Inter",
+          },
+        });
+
+        // Monthly Bar Chart
+        const monthlyData = chartsData?.monthlyBar || [];
+        const monthlyBarOpts = {
+          ...apexDefaults(),
+          series: [{ name: "Expenses", data: monthlyData.map((d) => d.total) }],
+          chart: {
+            type: "bar",
+            height: "100%",
+            parentHeightOffset: 0,
+            background: "transparent",
+            toolbar: { show: false },
+          },
+          plotOptions: { bar: { borderRadius: 4, columnWidth: "60%" } },
+          colors: ["#10b981"],
+          xaxis: {
+            ...apexDefaults().xaxis,
+            categories: monthlyData.map((d) => d.label),
+          },
+        };
+        if (window.chartMonthlyBar) window.chartMonthlyBar.destroy();
+        window.chartMonthlyBar = new ApexCharts(
+          document.querySelector("#monthlyBarChart"),
+          monthlyBarOpts,
+        );
+        window.chartMonthlyBar.render();
+
+        // Weekly Line Chart
+        const weeklyData = chartsData?.weeklyLine || [];
+        const weeklyLineOpts = {
+          ...apexDefaults(),
+          series: [
+            { name: "This Week", data: weeklyData.map((d) => d.thisWeek) },
+            { name: "Last Week", data: weeklyData.map((d) => d.lastWeek) },
+          ],
+          chart: {
+            type: "area",
+            height: "100%",
+            parentHeightOffset: 0,
+            background: "transparent",
+            toolbar: { show: false },
+          },
+          colors: ["#8b5cf6", "#06b6d4"],
+          fill: {
+            type: "gradient",
+            gradient: {
+              shadeIntensity: 1,
+              opacityFrom: 0.4,
+              opacityTo: 0.05,
+              stops: [0, 90, 100],
+            },
+          },
+          stroke: { curve: "smooth", width: 2, dashArray: [0, 5] },
+          xaxis: {
+            ...apexDefaults().xaxis,
+            categories: weeklyData.map((d) => d.day),
+          },
+          legend: {
+            ...apexDefaults().legend,
+            position: "top",
+            horizontalAlign: "right",
+          },
+        };
+        if (window.chartWeeklyLine) window.chartWeeklyLine.destroy();
+        window.chartWeeklyLine = new ApexCharts(
+          document.querySelector("#weeklyLineChart"),
+          weeklyLineOpts,
+        );
+        window.chartWeeklyLine.render();
+
+        // Category Pie Chart
+        const catData = AppData.categories || [];
+        const catPieOpts = {
+          ...apexDefaults(),
+          series: catData.length > 0 ? catData.map((c) => c.spent || 0) : [1],
+          labels:
+            catData.length > 0
+              ? catData.map((c) => c.category || c.name)
+              : ["No Data"],
+          chart: {
+            type: "donut",
+            height: "100%",
+            parentHeightOffset: 0,
+            background: "transparent",
+          },
+          colors: [
+            "#10b981",
+            "#06b6d4",
+            "#8b5cf6",
+            "#f59e0b",
+            "#ef4444",
+            "#ec4899",
+          ],
+          stroke: { show: false },
+          plotOptions: { pie: { donut: { size: "65%" } } },
+          legend: { ...apexDefaults().legend, position: "right" },
+        };
+        if (window.chartCatPie) window.chartCatPie.destroy();
+        window.chartCatPie = new ApexCharts(
+          document.querySelector("#categoryPieChart"),
+          catPieOpts,
+        );
+        window.chartCatPie.render();
+
+        // Income vs Expense Area Chart
+        const incExpData = chartsData?.incExp || [];
+        const incExpChartOpts = {
+          ...apexDefaults(),
+          series: [
+            { name: "Income", data: incExpData.map((d) => d.income) },
+            { name: "Expenses", data: incExpData.map((d) => d.expense) },
+          ],
+          chart: {
+            type: "area",
+            height: "100%",
+            parentHeightOffset: 0,
+            background: "transparent",
+            toolbar: { show: false },
+          },
+          colors: ["#10b981", "#8b5cf6"],
+          fill: {
+            type: "gradient",
+            gradient: {
+              shadeIntensity: 1,
+              opacityFrom: 0.4,
+              opacityTo: 0.05,
+              stops: [0, 90, 100],
+            },
+          },
+          stroke: { curve: "smooth", width: 2 },
+          xaxis: {
+            ...apexDefaults().xaxis,
+            categories: incExpData.map((d) => d.label),
+          },
+          legend: {
+            ...apexDefaults().legend,
+            position: "top",
+            horizontalAlign: "right",
+          },
+        };
+        if (window.chartIncExpArea) window.chartIncExpArea.destroy();
+        window.chartIncExpArea = new ApexCharts(
+          document.querySelector("#incomeExpenseChart"),
+          incExpChartOpts,
+        );
+        window.chartIncExpArea.render();
       }
-    });
 
-    // Monthly Bar Chart
-    const monthlyBarOpts = {
-      ...apexDefaults(),
-      series: [{ name: 'Expenses', data: [1850, 2100, 1750, 1980, 1620, 591] }],
-      chart: { type: 'bar', height: '100%', parentHeightOffset: 0, background: 'transparent', toolbar: { show: false } },
-      plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
-      colors: ['#10b981'],
-      xaxis: { ...apexDefaults().xaxis, categories: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'] }
-    };
-    const monthlyBar = new ApexCharts(document.querySelector("#monthlyBarChart"), monthlyBarOpts);
-    monthlyBar.render();
+      // Call init
+      initDashboard();
 
-    // Weekly Line Chart
-    const weeklyLineOpts = {
-      ...apexDefaults(),
-      series: [
-        { name: 'This Week', data: [45, 80, 35, 120, 65, 90, 40] },
-        { name: 'Last Week', data: [60, 55, 70, 90, 50, 110, 75] }
-      ],
-      chart: { type: 'area', height: '100%', parentHeightOffset: 0, background: 'transparent', toolbar: { show: false } },
-      colors: ['#8b5cf6', '#06b6d4'],
-      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-      stroke: { curve: 'smooth', width: 2, dashArray: [0, 5] },
-      xaxis: { ...apexDefaults().xaxis, categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
-      legend: { ...apexDefaults().legend, position: 'top', horizontalAlign: 'right' }
-    };
-    const weeklyLine = new ApexCharts(document.querySelector("#weeklyLineChart"), weeklyLineOpts);
-    weeklyLine.render();
+      // Update charts on theme change
+      function updateChartsTheme() {
+        const mode = document.body.classList.contains("light-mode")
+          ? "light"
+          : "dark";
+        const gridClr = document.body.classList.contains("light-mode")
+          ? "rgba(0,0,0,0.06)"
+          : "rgba(255,255,255,0.06)";
+        const textClr = document.body.classList.contains("light-mode")
+          ? "#64648a"
+          : "#8a8a9a";
+        const updateOptions = {
+          theme: { mode: mode },
+          tooltip: { theme: mode },
+          grid: { borderColor: gridClr },
+          xaxis: { labels: { style: { colors: textClr } } },
+          yaxis: { labels: { style: { colors: textClr } } },
+          legend: { labels: { colors: textClr } },
+        };
+        if (window.chartMonthlyBar)
+          window.chartMonthlyBar.updateOptions(updateOptions);
+        if (window.chartWeeklyLine)
+          window.chartWeeklyLine.updateOptions(updateOptions);
+        if (window.chartIncExpArea)
+          window.chartIncExpArea.updateOptions(updateOptions);
+        if (window.chartCatPie)
+          window.chartCatPie.updateOptions({
+            theme: { mode: mode },
+            tooltip: { theme: mode },
+            legend: { labels: { colors: textClr } },
+          });
+      }
 
-    // Category Pie Chart
-    const catPieOpts = {
-      ...apexDefaults(),
-      series: AppData.categories.map(c => c.spent),
-      labels: AppData.categories.map(c => c.name),
-      chart: { type: 'donut', height: '100%', parentHeightOffset: 0, background: 'transparent' },
-      colors: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'],
-      stroke: { show: false },
-      plotOptions: { pie: { donut: { size: '65%' } } },
-      legend: { ...apexDefaults().legend, position: 'right' }
-    };
-    const catPie = new ApexCharts(document.querySelector("#categoryPieChart"), catPieOpts);
-    catPie.render();
+      // Quick expense form
+      document
+        .getElementById("quickExpenseForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const amount = document.getElementById("qAmount").value;
+          const title = document.getElementById("qTitle").value;
+          const category = document.getElementById("qCategory").value;
+          const date = document.getElementById("qDate").value;
 
-    // Income vs Expense Area Chart
-    const incExpChartOpts = {
-      ...apexDefaults(),
-      series: [
-        { name: 'Income', data: [5800, 6100, 5900, 6400, 6800, 7190] },
-        { name: 'Expenses', data: [1850, 2100, 1750, 1980, 1620, 591] }
-      ],
-      chart: { type: 'area', height: '100%', parentHeightOffset: 0, background: 'transparent', toolbar: { show: false } },
-      colors: ['#10b981', '#8b5cf6'],
-      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-      stroke: { curve: 'smooth', width: 2 },
-      xaxis: { ...apexDefaults().xaxis, categories: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'] },
-      legend: { ...apexDefaults().legend, position: 'top', horizontalAlign: 'right' }
-    };
-    const incExpChart = new ApexCharts(document.querySelector("#incomeExpenseChart"), incExpChartOpts);
-    incExpChart.render();
+          const res = await Auth.apiFetch("/api/v1/expenses/", {
+            method: "POST",
+            body: JSON.stringify({
+              title,
+              amount,
+              category,
+              expense_date: date,
+              payment_method: "Cash",
+              status: "completed",
+            }),
+          });
 
-    // Update charts on theme change
-    function updateChartsTheme() {
-      const mode = chartMode();
-      const gridClr = gridColor();
-      const textClr = textColor();
-      const updateOptions = {
-        theme: { mode: mode },
-        tooltip: { theme: mode },
-        grid: { borderColor: gridClr },
-        xaxis: { labels: { style: { colors: textClr } } },
-        yaxis: { labels: { style: { colors: textClr } } },
-        legend: { labels: { colors: textClr } }
-      };
-      monthlyBar.updateOptions(updateOptions);
-      weeklyLine.updateOptions(updateOptions);
-      incExpChart.updateOptions(updateOptions);
-      
-      catPie.updateOptions({
-        theme: { mode: mode },
-        tooltip: { theme: mode },
-        legend: { labels: { colors: textClr } }
-      });
-    }
+          if (res && res.success) {
+            showToast("Expense added successfully!", "success");
+            closeModal("addExpenseModal");
+            e.target.reset();
+            // Refresh dashboard data
+            initDashboard();
+          } else {
+            showToast("Failed to add expense", "error");
+          }
+        });
 
-    // Quick expense form
-    document.getElementById('quickExpenseForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const amount = document.getElementById('qAmount').value;
-      const title = document.getElementById('qTitle').value;
-      const category = document.getElementById('qCategory').value;
-      const date = document.getElementById('qDate').value;
-      const newExpense = {
-        id: Date.now(),
-        title: title,
-        amount: parseFloat(amount).toFixed(2),
-        category: category,
-        date: date,
-        method: 'Cash',
-        status: 'completed'
-      };
-      AppData.expenses.unshift(newExpense);
-      localStorage.setItem('expenses', JSON.stringify(AppData.expenses));
-      
-      // Re-render recent transactions
-      const tbody = document.getElementById('recentTransactions');
-      const cat = AppData.categories.find(c => c.name === newExpense.category);
-      const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td style="color:var(--text-primary);font-weight:500">${newExpense.title}</td>
-        <td><span class="badge badge-cyan">${cat ? cat.icon : '📦'} ${newExpense.category}</span></td>
-        <td>${newExpense.date}</td>
-        <td>${newExpense.method}</td>
-        <td style="color:var(--accent-red);font-weight:600">-$${newExpense.amount}</td>
-        <td><span class="badge badge-emerald">${newExpense.status}</span></td>
-      `;
-      tbody.insertBefore(newRow, tbody.firstChild);
-      if(tbody.children.length > 7) tbody.lastChild.remove();
+      // Dashboard Filter Logic
+      const timeFilters = document.querySelectorAll(
+        "#dashboardTimeFilters .filter-tab",
+      );
+      const customRange = document.getElementById("customDateRange");
 
-      showToast('Expense added successfully!', 'success');
-      closeModal('addExpenseModal');
-      e.target.reset();
-    });
-    // Dashboard Filter Logic
-    const timeFilters = document.querySelectorAll('#dashboardTimeFilters .filter-tab');
-    const customRange = document.getElementById('customDateRange');
-    
-    timeFilters.forEach(tab => {
-      tab.addEventListener('click', () => {
-        timeFilters.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+      function getFilterDates(range) {
+        const d = new Date();
+        const end = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString();
+        let start = new Date();
         
-        if(tab.dataset.range === 'custom') {
-          customRange.style.opacity = '1';
-          customRange.style.pointerEvents = 'auto';
-        } else {
-          customRange.style.opacity = '0.5';
-          customRange.style.pointerEvents = 'none';
-          showToast(`Dashboard updated for: ${tab.innerText}`, 'success');
-          // Add data reload logic here based on selected range
+        if (range === 'today') {
+          start.setHours(0,0,0,0);
+        } else if (range === '7d') {
+          start.setDate(start.getDate() - 7);
+        } else if (range === '30d') {
+          start.setDate(start.getDate() - 30);
+        } else if (range === 'month') {
+          start = new Date(start.getFullYear(), start.getMonth(), 1);
         }
-      });
-    });
-
-    document.getElementById('applyFilterBtn').addEventListener('click', () => {
-      const start = document.getElementById('filterStartDate').value;
-      const end = document.getElementById('filterEndDate').value;
-      if(start && end) {
-        showToast(`Dashboard updated from ${start} to ${end}`, 'success');
-        // Add data reload logic here for custom range
-      } else {
-        // Fallback for missing function
-        if (typeof showToast !== 'undefined') {
-            showToast('Please select both start and end dates', 'error');
-        } else {
-            alert('Please select both start and end dates');
-        }
+        
+        return { 
+          startDate: new Date(start.getTime() - (start.getTimezoneOffset() * 60000)).toISOString(),
+          endDate: end
+        };
       }
-    });
-  </script>
-</body>
 
+      timeFilters.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          timeFilters.forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+
+          if (tab.dataset.range === "custom") {
+            customRange.style.opacity = "1";
+            customRange.style.pointerEvents = "auto";
+          } else {
+            customRange.style.opacity = "0.5";
+            customRange.style.pointerEvents = "none";
+            showToast(`Dashboard updated for: ${tab.innerText}`, "success");
+            const dates = getFilterDates(tab.dataset.range);
+            initDashboard(dates.startDate, dates.endDate);
+          }
+        });
+      });
+
+      document
+        .getElementById("applyFilterBtn")
+        .addEventListener("click", () => {
+          const start = document.getElementById("filterStartDate").value;
+          const end = document.getElementById("filterEndDate").value;
+          if (start && end) {
+            showToast(`Dashboard updated from ${start} to ${end}`, "success");
+            // API expects ISO strings
+            initDashboard(new Date(start).toISOString(), new Date(end).toISOString());
+          } else {
+            if (typeof showToast !== "undefined") {
+              showToast("Please select both start and end dates", "error");
+            } else {
+              alert("Please select both start and end dates");
+            }
+          }
+        });
+    </script>
+  </body>
 </html>

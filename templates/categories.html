@@ -1,150 +1,372 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ExpenseIQ - Manage expense categories and budgets"
+    />
+    <title>ExpenseIQ — Categories</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ExpenseIQ - Manage expense categories and budgets">
-  <title>ExpenseIQ — Categories</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-
-<body>
-  <div id="layoutSidebar"></div>
-  <div class="main-content">
-    <div id="layoutTopbar"></div>
-    <div class="page fade-in">
-
-      <div
-        style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-        <div>
-          <h2 style="font-size:18px;font-weight:600">Your Categories</h2>
-          <p style="font-size:13px;color:var(--text-secondary)">Manage spending categories and budgets</p>
-        </div>
-        <button class="btn btn-primary" onclick="openModal('categoryFormModal')">+ New Category</button>
-      </div>
-
-      <!-- Category Cards Grid -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px" id="categoryGrid">
-      </div>
-    </div>
-
-    <!-- Category Form Modal -->
-    <div class="modal-overlay" id="categoryFormModal">
-      <div class="modal">
-        <div class="modal-header">
-          <h2 class="modal-title">New Category</h2>
-          <button class="modal-close" onclick="closeModal('categoryFormModal')">✕</button>
-        </div>
-        <form id="categoryForm">
-          <div class="form-group">
-            <label class="form-label">Category Name *</label>
-            <input type="text" class="form-input" placeholder="e.g. Education" required id="cName">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Icon</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap" id="iconSelector">
-              <span class="icon-opt" data-icon="🍔"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🍔</span>
-              <span class="icon-opt" data-icon="🚗"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🚗</span>
-              <span class="icon-opt" data-icon="🎬"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🎬</span>
-              <span class="icon-opt" data-icon="⚡"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">⚡</span>
-              <span class="icon-opt" data-icon="💪"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">💪</span>
-              <span class="icon-opt" data-icon="🛍️"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🛍️</span>
-              <span class="icon-opt" data-icon="📚"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">📚</span>
-              <span class="icon-opt" data-icon="✈️"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">✈️</span>
-              <span class="icon-opt" data-icon="🏠"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🏠</span>
-              <span class="icon-opt" data-icon="🎮"
-                style="font-size:24px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;transition:all .2s">🎮</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Color</label>
-            <div class="color-options" id="colorPicker">
-              <div class="color-dot" style="background:#10b981" data-color="#10b981"></div>
-              <div class="color-dot" style="background:#06b6d4" data-color="#06b6d4"></div>
-              <div class="color-dot" style="background:#8b5cf6" data-color="#8b5cf6"></div>
-              <div class="color-dot" style="background:#f59e0b" data-color="#f59e0b"></div>
-              <div class="color-dot" style="background:#ef4444" data-color="#ef4444"></div>
-              <div class="color-dot" style="background:#ec4899" data-color="#ec4899"></div>
-              <div class="color-dot" style="background:#3b82f6" data-color="#3b82f6"></div>
-              <div class="color-dot" style="background:#14b8a6" data-color="#14b8a6"></div>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:12px;margin-top:24px">
-            <button type="submit" class="btn btn-primary" style="flex:1">Save Category</button>
-            <button type="button" class="btn btn-secondary" onclick="closeModal('categoryFormModal')">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div id="layoutBottomNav"></div>
-
-  <script src="{% static 'js/auth.js' %}"></script>
-  <script src="{% static 'js/components.js' %}?v=3.0"></script>
-  <script src="{% static 'js/app.js' %}?v=3.0"></script>
-  <script>
-    document.getElementById('layoutSidebar').innerHTML = renderSidebar('categories');
-    document.getElementById('layoutTopbar').innerHTML = renderTopbar('Categories', 'Organize your spending into categories');
-    document.getElementById('layoutBottomNav').innerHTML = renderBottomNav('categories');
-    injectLayout();
-
-    // Render category cards
-    const grid = document.getElementById('categoryGrid');
-    AppData.categories.forEach(c => {
-      grid.innerHTML += `
-      <div class="category-card fade-in" style="display:flex; justify-content:space-between; align-items:center; padding:16px;">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div class="category-icon" style="background:${c.color}20;color:${c.color}">${c.icon}</div>
+  <body>
+    <div id="layoutSidebar"></div>
+    <div class="main-content">
+      <div id="layoutTopbar"></div>
+      <div class="page fade-in">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+          "
+        >
           <div>
-            <div style="font-weight:600;font-size:16px">${c.name}</div>
+            <h2 style="font-size: 18px; font-weight: 600">Your Categories</h2>
+            <p style="font-size: 13px; color: var(--text-secondary)">
+              Manage spending categories and budgets
+            </p>
           </div>
+          <button
+            class="btn btn-primary"
+            onclick="openModal('categoryFormModal')"
+          >
+            + New Category
+          </button>
         </div>
-        <div>
-          <button class="btn btn-sm btn-secondary" style="padding:4px 12px;font-size:12px" onclick="showToast('Edit coming soon','warning')">Edit</button>
+
+        <!-- Category Cards Grid -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+          "
+          id="categoryGrid"
+        ></div>
+      </div>
+
+      <!-- Category Form Modal -->
+      <div class="modal-overlay" id="categoryFormModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">New Category</h2>
+            <button
+              class="modal-close"
+              onclick="closeModal('categoryFormModal')"
+            >
+              ✕
+            </button>
+          </div>
+          <form id="categoryForm">
+            <div class="form-group">
+              <label class="form-label">Category Name *</label>
+              <input
+                type="text"
+                class="form-input"
+                placeholder="e.g. Education"
+                required
+                id="cName"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Icon</label>
+              <div
+                style="display: flex; gap: 8px; flex-wrap: wrap"
+                id="iconSelector"
+              >
+                <span
+                  class="icon-opt"
+                  data-icon="🍔"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >🍔</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="🚗"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >🚗</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="🎬"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >🎬</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="⚡"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >⚡</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="💪"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >💪</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="🛍️"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >🛍️</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="📚"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >📚</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="✈️"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >✈️</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="🏠"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >🏠</span
+                >
+                <span
+                  class="icon-opt"
+                  data-icon="🎮"
+                  style="
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                  "
+                  >🎮</span
+                >
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color</label>
+              <div class="color-options" id="colorPicker">
+                <div
+                  class="color-dot"
+                  style="background: #10b981"
+                  data-color="#10b981"
+                ></div>
+                <div
+                  class="color-dot"
+                  style="background: #06b6d4"
+                  data-color="#06b6d4"
+                ></div>
+                <div
+                  class="color-dot"
+                  style="background: #8b5cf6"
+                  data-color="#8b5cf6"
+                ></div>
+                <div
+                  class="color-dot"
+                  style="background: #f59e0b"
+                  data-color="#f59e0b"
+                ></div>
+                <div
+                  class="color-dot"
+                  style="background: #ef4444"
+                  data-color="#ef4444"
+                ></div>
+                <div
+                  class="color-dot"
+                  style="background: #ec4899"
+                  data-color="#ec4899"
+                ></div>
+                <div
+                  class="color-dot"
+                  style="background: #3b82f6"
+                  data-color="#3b82f6"
+                ></div>
+                <div
+                  class="color-dot"
+                  style="background: #14b8a6"
+                  data-color="#14b8a6"
+                ></div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 24px">
+              <button type="submit" class="btn btn-primary" style="flex: 1">
+                Save Category
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal('categoryFormModal')"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
-      </div>`;
-    });
+      </div>
+    </div>
+    <div id="layoutBottomNav"></div>
 
-    // Icon selector
-    let selectedIcon = '🍔';
-    document.querySelectorAll('.icon-opt').forEach(el => {
-      el.addEventListener('click', () => {
-        document.querySelectorAll('.icon-opt').forEach(e => e.style.borderColor = 'transparent');
-        el.style.borderColor = 'var(--accent-emerald)';
-        selectedIcon = el.dataset.icon;
+    <script src="{% static 'js/auth.js' %}?v=4.1"></script>
+    <script src="{% static 'js/components.js' %}?v=4.1"></script>
+    <script src="{% static 'js/app.js' %}?v=4.1"></script>
+    <script>
+      document.getElementById("layoutSidebar").innerHTML =
+        renderSidebar("categories");
+      document.getElementById("layoutTopbar").innerHTML = renderTopbar(
+        "Categories",
+        "Organize your spending into categories",
+      );
+      document.getElementById("layoutBottomNav").innerHTML =
+        renderBottomNav("categories");
+      injectLayout();
+
+      // Render category cards
+      async function loadCategories() {
+        if (typeof Auth !== "undefined") await Auth.init();
+        const res = await Auth.apiFetch("/api/v1/categories");
+        if (res && res.success) {
+          const grid = document.getElementById("categoryGrid");
+          grid.innerHTML = "";
+          res.data.forEach((c) => {
+            grid.innerHTML += `
+          <div class="category-card fade-in" style="display:flex; justify-content:space-between; align-items:center; padding:16px;">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="category-icon" style="background:${c.color || "#06b6d4"}20;color:${c.color || "#06b6d4"}">${c.icon || "📦"}</div>
+              <div>
+                <div style="font-weight:600;font-size:16px">${c.name}</div>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-sm btn-secondary" style="padding:4px 12px;font-size:12px" onclick="showToast('Edit coming soon','warning')">Edit</button>
+            </div>
+          </div>`;
+          });
+        }
+      }
+
+      loadCategories();
+
+      // Icon selector
+      let selectedIcon = "🍔";
+      document.querySelectorAll(".icon-opt").forEach((el) => {
+        el.addEventListener("click", () => {
+          document
+            .querySelectorAll(".icon-opt")
+            .forEach((e) => (e.style.borderColor = "transparent"));
+          el.style.borderColor = "var(--accent-emerald)";
+          selectedIcon = el.dataset.icon;
+        });
       });
-    });
 
-    // Color picker
-    let selectedColor = '#10b981';
-    document.querySelectorAll('.color-dot').forEach(el => {
-      el.addEventListener('click', () => {
-        document.querySelectorAll('.color-dot').forEach(e => e.classList.remove('active'));
-        el.classList.add('active');
-        selectedColor = el.dataset.color;
+      // Color picker
+      let selectedColor = "#10b981";
+      document.querySelectorAll(".color-dot").forEach((el) => {
+        el.addEventListener("click", () => {
+          document
+            .querySelectorAll(".color-dot")
+            .forEach((e) => e.classList.remove("active"));
+          el.classList.add("active");
+          selectedColor = el.dataset.color;
+        });
       });
-    });
 
-    // Form submit
-    document.getElementById('categoryForm').addEventListener('submit', e => {
-      e.preventDefault();
-      showToast('Category created successfully!');
-      closeModal('categoryFormModal');
-      e.target.reset();
-    });
-  </script>
-</body>
+      // Form submit
+      document
+        .getElementById("categoryForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("cName").value;
 
+          const res = await Auth.apiFetch("/api/v1/categories", {
+            method: "POST",
+            body: JSON.stringify({
+              name: name,
+              icon: selectedIcon,
+              color: selectedColor,
+              monthly_budget: 0,
+            }),
+          });
+
+          if (res && res.success) {
+            showToast("Category created successfully!", "success");
+            closeModal("categoryFormModal");
+            e.target.reset();
+            loadCategories();
+          } else {
+            showToast(res ? res.message : "Error creating category", "error");
+          }
+        });
+    </script>
+  </body>
 </html>

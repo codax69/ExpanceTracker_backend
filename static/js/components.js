@@ -3,9 +3,8 @@
 // JWT-aware: shows user initials, display name, and JWT logout
 
 function renderSidebar(activePage) {
-  const initials = typeof Auth !== 'undefined' ? Auth.getUserInitials() : 'U';
-  const displayName = typeof Auth !== 'undefined' ? Auth.getUserDisplayName() : 'User';
-
+  const initials = typeof Auth !== "undefined" ? Auth.getUserInitials() : "U";
+  const displayName = typeof Auth !== "undefined" ? Auth.getUserDisplayName() : "User";
   return `
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -13,25 +12,28 @@ function renderSidebar(activePage) {
       <span class="sidebar-title">ExpenseIQ</span>
     </div>
     <nav class="sidebar-nav">
-      <a href="/" class="nav-item ${activePage === 'dashboard' ? 'active' : ''}">
+      <a href="/" class="nav-item ${activePage === "dashboard" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         <span class="nav-label">Dashboard</span>
       </a>
-      <a href="/expenses/" class="nav-item ${activePage === 'expenses' ? 'active' : ''}">
+      <a href="/expenses/" class="nav-item ${activePage === "expenses" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
         <span class="nav-label">Expenses</span>
       </a>
-
+      <a href="/budget/" class="nav-item ${activePage === 'budget' ? 'active' : ''}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+        <span class="nav-label">Budget</span>
+      </a>
       <a href="/categories/" class="nav-item ${activePage === 'categories' ? 'active' : ''}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
         <span class="nav-label">Categories</span>
       </a>
 
-      <a href="/profile/" class="nav-item ${activePage === 'profile' ? 'active' : ''}">
+      <a href="/profile/" class="nav-item ${activePage === "profile" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span class="nav-label">Profile</span>
       </a>
-      <a href="/settings/" class="nav-item ${activePage === 'settings' ? 'active' : ''}">
+      <a href="/settings/" class="nav-item ${activePage === "settings" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         <span class="nav-label">Settings</span>
       </a>
@@ -56,7 +58,7 @@ function renderSidebar(activePage) {
 }
 
 function renderTopbar(title, subtitle) {
-  const initials = typeof Auth !== 'undefined' ? Auth.getUserInitials() : 'U';
+  const initials = typeof Auth !== "undefined" ? Auth.getUserInitials() : "U";
 
   return `
   <header class="topbar">
@@ -91,25 +93,23 @@ function renderBottomNav(activePage) {
   return `
   <nav class="bottom-nav">
     <div class="bottom-nav-inner">
-      <a href="/" class="bottom-nav-item ${activePage === 'dashboard' ? 'active' : ''}">
+      <a href="/" class="bottom-nav-item ${activePage === "dashboard" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         <span>Home</span>
       </a>
-      <a href="/expenses/" class="bottom-nav-item ${activePage === 'expenses' ? 'active' : ''}">
+      <a href="/expenses/" class="bottom-nav-item ${activePage === "expenses" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
         <span>Expenses</span>
       </a>
-
-
       <a href="/budget/" class="bottom-nav-item ${activePage === 'budget' ? 'active' : ''}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
         <span>Budget</span>
       </a>
-      <a href="/profile/" class="bottom-nav-item ${activePage === 'profile' ? 'active' : ''}">
+      <a href="/profile/" class="bottom-nav-item ${activePage === "profile" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>Profile</span>
       </a>
-      <a href="/settings/" class="bottom-nav-item ${activePage === 'settings' ? 'active' : ''}">
+      <a href="/settings/" class="bottom-nav-item ${activePage === "settings" ? "active" : ""}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         <span>Settings</span>
       </a>
@@ -119,16 +119,34 @@ function renderBottomNav(activePage) {
 
 function injectLayout(activePage, title, subtitle) {
   // Show menu btn on mobile
-  const style = document.createElement('style');
-  style.textContent = '@media(max-width:1024px){#menuBtn{display:flex!important}}';
+  const style = document.createElement("style");
+  style.textContent =
+    "@media(max-width:1024px){#menuBtn{display:flex!important}}";
   document.head.appendChild(style);
 }
 
 // ── JWT Logout handler ──
 function handleLogout() {
-  if (typeof Auth !== 'undefined') {
+  if (typeof Auth !== "undefined") {
     Auth.logout();
   } else {
-    window.location.href = '/logout/';
+    window.location.href = "/logout/";
   }
+}
+
+// ── Profile UI Updater ──
+function updateProfileUI() {
+  if (typeof Auth === "undefined") return;
+  const initials = Auth.getUserInitials();
+  const displayName = Auth.getUserDisplayName();
+
+  // Update sidebar
+  const sidebarAvatar = document.querySelector(".sidebar-user-avatar");
+  if (sidebarAvatar) sidebarAvatar.textContent = initials;
+  const sidebarName = document.querySelector(".sidebar-user-name");
+  if (sidebarName) sidebarName.textContent = displayName;
+
+  // Update topbar
+  const topbarAvatar = document.getElementById("topbarAvatar");
+  if (topbarAvatar) topbarAvatar.textContent = initials;
 }

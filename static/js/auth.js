@@ -7,10 +7,10 @@ const Auth = {
   // ── Login ──
   async login(identifier, password) {
     try {
-      const res = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+      const res = await fetch("/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ username: identifier, password }),
       });
       const data = await res.json();
@@ -18,19 +18,23 @@ const Auth = {
         this.user = data.data.user;
         return { success: true, user: this.user, message: data.message };
       }
-      return { success: false, message: data.message || 'Login failed', errors: data.errors };
+      return {
+        success: false,
+        message: data.message || "Login failed",
+        errors: data.errors,
+      };
     } catch (err) {
-      return { success: false, message: 'Network error. Please try again.' };
+      return { success: false, message: "Network error. Please try again." };
     }
   },
 
   // ── Register ──
   async register(username, email, password, confirmPassword) {
     try {
-      const res = await fetch('/api/v1/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+      const res = await fetch("/api/v1/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ username, email, password, confirmPassword }),
       });
       const data = await res.json();
@@ -38,32 +42,36 @@ const Auth = {
         this.user = data.data.user;
         return { success: true, user: this.user, message: data.message };
       }
-      return { success: false, message: data.message || 'Registration failed', errors: data.errors };
+      return {
+        success: false,
+        message: data.message || "Registration failed",
+        errors: data.errors,
+      };
     } catch (err) {
-      return { success: false, message: 'Network error. Please try again.' };
+      return { success: false, message: "Network error. Please try again." };
     }
   },
 
   // ── Logout ──
   async logout() {
     try {
-      await fetch('/api/v1/auth/logout', {
-        method: 'POST',
-        credentials: 'same-origin',
+      await fetch("/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
       });
     } catch (e) {
       // Ignore — we clear local state regardless
     }
     this.user = null;
-    window.location.href = '/login/';
+    window.location.href = "/login/";
   },
 
   // ── Refresh tokens ──
   async refresh() {
     try {
-      const res = await fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        credentials: 'same-origin',
+      const res = await fetch("/api/v1/auth/refresh", {
+        method: "POST",
+        credentials: "same-origin",
       });
       if (!res.ok) {
         // Refresh failed — session expired
@@ -79,13 +87,11 @@ const Auth = {
   // ── Get current user from API ──
   async fetchUser() {
     try {
-      const res = await fetch('/api/v1/auth/me', { credentials: 'same-origin' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          this.user = data.data;
-          return this.user;
-        }
+      // Use apiFetch so it automatically handles 401 and refresh token logic
+      const data = await this.apiFetch("/api/v1/auth/me");
+      if (data && data.success) {
+        this.user = data.data;
+        return this.user;
       }
       return null;
     } catch (e) {
@@ -101,18 +107,18 @@ const Auth = {
   // ── User display helpers ──
   getUserInitials() {
     const user = this.getUser();
-    if (!user) return 'U';
+    if (!user) return "U";
     if (user.firstName && user.lastName) {
       return (user.firstName[0] + user.lastName[0]).toUpperCase();
     }
-    return user.username ? user.username[0].toUpperCase() : 'U';
+    return user.username ? user.username[0].toUpperCase() : "U";
   },
 
   getUserDisplayName() {
     const user = this.getUser();
-    if (!user) return 'User';
+    if (!user) return "User";
     if (user.firstName) return user.firstName;
-    return user.username || 'User';
+    return user.username || "User";
   },
 
   isLoggedIn() {
@@ -122,16 +128,20 @@ const Auth = {
   // ── Change password ──
   async changePassword(currentPassword, newPassword, confirmPassword) {
     try {
-      const res = await fetch('/api/v1/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+      const res = await fetch("/api/v1/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
       });
       const data = await res.json();
-      return { success: data.success, message: data.message, errors: data.errors };
+      return {
+        success: data.success,
+        message: data.message,
+        errors: data.errors,
+      };
     } catch (err) {
-      return { success: false, message: 'Network error. Please try again.' };
+      return { success: false, message: "Network error. Please try again." };
     }
   },
 
@@ -146,12 +156,69 @@ const Auth = {
 
   // ── Initialize on protected pages ──
   async init() {
-    const user = this.getUser();
+    // With HttpOnly cookies, user state is null on reload.
+    // Must fetch from API to determine login status.
+    const user = await this.fetchUser();
     if (user) {
       this.startAutoRefresh();
-      // Silently refresh user data from API
-      this.fetchUser();
+      if (typeof updateProfileUI === 'function') {
+        updateProfileUI();
+      }
+    } else {
+      // Not logged in, but on a protected page?
+      // window.location.href = '/login/';
     }
     return user;
+  },
+
+  // ── CSRF token reader ──
+  getCSRFToken() {
+    const name = "csrftoken";
+    const cookies = document.cookie.split(";");
+    for (let c of cookies) {
+      c = c.trim();
+      if (c.startsWith(name + "=")) {
+        return decodeURIComponent(c.substring(name.length + 1));
+      }
+    }
+    // Fallback: read from hidden input if present
+    const el = document.querySelector("[name=csrfmiddlewaretoken]");
+    return el ? el.value : "";
+  },
+
+  // ── General API Fetch helper ──
+  async apiFetch(url, options = {}) {
+    try {
+      const csrfToken = this.getCSRFToken();
+      const headers = {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+        ...(options.headers || {}),
+      };
+      const res = await fetch(url, {
+        ...options,
+        credentials: "same-origin",
+        headers,
+      });
+      if (res.status === 401) {
+        // If unauthorized, attempt to refresh and retry
+        const refreshed = await this.refresh();
+        if (refreshed) {
+          const retryRes = await fetch(url, {
+            ...options,
+            credentials: "same-origin",
+            headers,
+          });
+          return await retryRes.json();
+        } else {
+          this.logout();
+          return null;
+        }
+      }
+      return await res.json();
+    } catch (e) {
+      console.error("API Fetch error:", e);
+      return null;
+    }
   },
 };

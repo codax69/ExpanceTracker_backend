@@ -7,6 +7,23 @@ import time
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.conf import settings
+from django.middleware.csrf import get_token
+
+
+class EnsureCsrfCookieMiddleware:
+    """
+    Ensures the CSRF cookie is set on every response.
+    This is required so that JavaScript can read the csrftoken cookie
+    and include it as X-CSRFToken header on POST/PUT/DELETE requests.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Force Django to set the CSRF cookie
+        get_token(request)
+        response = self.get_response(request)
+        return response
 
 
 class RateLimitMiddleware:

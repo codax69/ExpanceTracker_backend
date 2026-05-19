@@ -4,7 +4,7 @@ Mirrors: /api/v1/categories/*, /api/v1/budget/*, /api/v1/reports/*
 """
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timezone as dt_timezone
 
 from rest_framework.views import APIView
 from django.http import HttpResponse
@@ -114,11 +114,11 @@ class BudgetGetView(APIView):
             return ApiResponse.error('Budget not found', 404)
 
         # Calculate current spending for the month
-        start = datetime(int(year), int(month), 1, tzinfo=timezone.utc)
+        start = datetime(int(year), int(month), 1, tzinfo=dt_timezone.utc)
         if int(month) == 12:
-            end = datetime(int(year) + 1, 1, 1, tzinfo=timezone.utc)
+            end = datetime(int(year) + 1, 1, 1, tzinfo=dt_timezone.utc)
         else:
-            end = datetime(int(year), int(month) + 1, 1, tzinfo=timezone.utc)
+            end = datetime(int(year), int(month) + 1, 1, tzinfo=dt_timezone.utc)
 
         current_spent = Expense.objects.filter(
             expense_date__gte=start, expense_date__lt=end

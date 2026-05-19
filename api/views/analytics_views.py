@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from django.db.models import Sum, Count, Avg
 from django.db.models.functions import ExtractMonth, ExtractYear, ExtractWeekDay
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from ..models import Expense, Income, Category
 from ..utils import (
@@ -147,11 +147,26 @@ class AnalyticsKPIsView(APIView):
 
     def get(self, request):
         now = timezone.now()
-        month_start = get_start_of_month(now)
-        month_end = get_end_of_month(now)
+        
+        start_date_str = request.query_params.get('startDate')
+        end_date_str = request.query_params.get('endDate')
+        
+        if start_date_str and end_date_str:
+            try:
+                start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+                month_start = start_date
+                month_end = end_date
+            except ValueError:
+                month_start = get_start_of_month(now)
+                month_end = get_end_of_month(now)
+        else:
+            month_start = get_start_of_month(now)
+            month_end = get_end_of_month(now)
+            
         week_start = get_start_of_week(now)
         week_end = get_end_of_week(now)
-        all_time_start = datetime(2000, 1, 1, tzinfo=timezone.utc)
+        all_time_start = datetime(2000, 1, 1, tzinfo=dt_timezone.utc)
 
         total_exp = _sum_expenses(all_time_start, now)
         total_inc = _sum_income(all_time_start, now)
@@ -171,8 +186,8 @@ class AnalyticsKPIsView(APIView):
 
         balance = total_inc['total'] - total_exp['total']
         savings_rate = round((balance / total_inc['total'] * 100), 2) if total_inc['total'] > 0 else 0
-        days_in_month = now.day
-        daily_avg = round(monthly_exp['total'] / days_in_month, 2) if days_in_month > 0 else 0
+        days_in_month = (month_end - month_start).days or 1
+        daily_avg = round(monthly_exp['total'] / days_in_month, 2)
         top_category = category_data[0] if category_data else None
 
         return ApiResponse.success({
@@ -287,7 +302,21 @@ class AnalyticsCategoryPieChartView(APIView):
 
     def get(self, request):
         now = timezone.now()
-        data = _group_expenses_by_category(get_start_of_month(now), get_end_of_month(now))
+        start_date_str = request.query_params.get('startDate')
+        end_date_str = request.query_params.get('endDate')
+        
+        if start_date_str and end_date_str:
+            try:
+                start = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                end = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+            except ValueError:
+                start = get_start_of_month(now)
+                end = get_end_of_month(now)
+        else:
+            start = get_start_of_month(now)
+            end = get_end_of_month(now)
+            
+        data = _group_expenses_by_category(start, end)
         return ApiResponse.success(data)
 
 
@@ -319,8 +348,20 @@ class AnalyticsCategoryView(APIView):
 
     def get(self, request):
         now = timezone.now()
-        month_start = get_start_of_month(now)
-        month_end = get_end_of_month(now)
+        start_date_str = request.query_params.get('startDate')
+        end_date_str = request.query_params.get('endDate')
+        
+        if start_date_str and end_date_str:
+            try:
+                month_start = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                month_end = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+            except ValueError:
+                month_start = get_start_of_month(now)
+                month_end = get_end_of_month(now)
+        else:
+            month_start = get_start_of_month(now)
+            month_end = get_end_of_month(now)
+            
         data = _group_expenses_by_category(month_start, month_end)
 
         # Enrich with category budget info
