@@ -13,7 +13,9 @@ from ..utils import ApiResponse
 
 class ExpenseListCreateView(APIView):
     """GET /api/v1/expenses/ — list with filters & pagination
-       POST /api/v1/expenses/ — create new expense"""
+        POST /api/v1/expenses/ — create new expense"""
+
+    parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request):
         page = int(request.query_params.get('page', 1))

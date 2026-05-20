@@ -32,7 +32,7 @@ from api.views.auth_views import (
 urlpatterns = [
     path('', login_required(TemplateView.as_view(template_name='index.html')), name='home'),
     path('expenses/', login_required(TemplateView.as_view(template_name='expenses.html')), name='expenses'),
-
+    path('budget/', login_required(TemplateView.as_view(template_name='budget.html')), name='budget'),
     path('categories/', login_required(TemplateView.as_view(template_name='categories.html')), name='categories'),
 
     path('settings/', login_required(TemplateView.as_view(template_name='settings.html')), name='settings'),
