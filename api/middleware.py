@@ -110,9 +110,16 @@ class RateLimitMiddleware:
         remaining = limit - len(timestamps)
         return False, remaining, 0
 
+    # Paths that are exempt from all rate limiting
+    EXEMPT_PATHS = ["/api/v1/auth/me"]
+
     def __call__(self, request):
         ip = self._get_client_ip(request)
         path = request.path
+
+        # Skip rate limiting for exempt paths
+        if any(path.rstrip("/") == p.rstrip("/") for p in self.EXEMPT_PATHS):
+            return self.get_response(request)
 
         # Determine which rate limit to apply
         is_auth_path = any(path.startswith(p) for p in self.auth_paths)
