@@ -7,3 +7,4 @@ python-dotenv>=1.0
 drf-spectacular>=0.27.0
 djangorestframework-simplejwt>=5.3
 Pillow>=10.0
+mysqlclient>=2.2.0

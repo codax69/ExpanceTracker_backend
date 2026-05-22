@@ -99,22 +99,28 @@
           </div>
         </div>
 
-        <!-- Budget Progress -->
+        <!-- Add Categories -->
         <div class="card" style="margin-top: 24px">
           <div class="card-header">
-            <div class="card-title">Budget Progress</div>
+            <div class="card-title">Add Categories</div>
           </div>
-          <div
-            class="card-body"
-            id="budgetProgressContainer"
-            style="
-              display: grid;
-              grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-              gap: 16px;
-              padding: 16px;
-            "
-          >
-            <!-- Dynamic progress cards will go here -->
+          <div class="card-body" style="padding: 16px;">
+            <form id="addCategoryForm" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">Category Name</label>
+                <input type="text" class="form-input" id="newCatName" required placeholder="e.g. Travel">
+              </div>
+              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">Icon</label>
+                <input type="text" class="form-input" id="newCatIcon" placeholder="Emoji (e.g. ✈️)">
+              </div>
+              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">Color</label>
+                <input type="color" class="form-input" id="newCatColor" value="#06b6d4" style="padding: 4px; height: 42px;">
+              </div>
+              <button type="submit" class="btn btn-primary" style="height: 42px;">Add Category</button>
+            </form>
+            <div id="customCategoriesList" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"></div>
           </div>
         </div>
 
@@ -252,7 +258,7 @@
         });
 
         renderBudgets();
-        renderBudgetProgress();
+        renderCustomCategories();
         renderBudgetHistory();
       }
 
@@ -309,32 +315,41 @@
           (savingRatio > 0 ? savingRatio : 0) + "%";
       }
 
-      function renderBudgetProgress() {
-        const container = document.getElementById("budgetProgressContainer");
+      function renderCustomCategories() {
+        const container = document.getElementById("customCategoriesList");
         container.innerHTML = "";
         allCategories.forEach((c) => {
-          const aData = analyticsData.find((a) => a.category === c.name) || {
-            spent: 0,
-          };
-          const spent = aData.spent || 0;
-          const budget = parseFloat(c.monthlyBudget) || 0;
-          if (budget <= 0) return;
-          const progress = Math.min((spent / budget) * 100, 100).toFixed(0);
-          container.innerHTML += `<div style="padding:16px;background:var(--bg-hover);border-radius:var(--radius-md);border:1px solid var(--glass-border);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <span style="font-weight:600;color:var(--text-primary);">${c.icon || "\ud83d\udce6"} ${c.name}</span>
-            <span class="badge badge-cyan">Monthly</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">
-            <span>Spent: ${Settings.formatCurrency(spent)}</span><span>Budget: ${Settings.formatCurrency(budget)}</span>
-          </div>
-          <div style="height:6px;background:var(--bg-card);border-radius:3px;overflow:hidden;">
-            <div style="height:100%;width:${progress}%;background:${progress > 90 ? "var(--accent-red)" : "var(--accent-primary)"};transition:width 0.3s;"></div>
-          </div>
-          <div style="text-align:right;font-size:12px;color:var(--text-muted);margin-top:4px;">${progress}%</div>
-        </div>`;
+          container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-hover); border-radius:var(--radius-md); border:1px solid var(--glass-border);">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size: 20px;">${c.icon || "\ud83d\udce6"}</span>
+              <span style="font-weight:600; color:var(--text-primary);">${c.name}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="width: 20px; height: 20px; border-radius: 50%; background: ${c.color || '#06b6d4'};"></div>
+            </div>
+          </div>`;
         });
       }
+
+      document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('newCatName').value;
+        const icon = document.getElementById('newCatIcon').value || '📦';
+        const color = document.getElementById('newCatColor').value;
+        
+        const res = await Auth.apiFetch('/api/v1/categories', {
+          method: 'POST',
+          body: JSON.stringify({ name, icon, color, monthlyBudget: 0 })
+        });
+        
+        if (res && res.success) {
+          showToast('Category added successfully!', 'success');
+          document.getElementById('addCategoryForm').reset();
+          fetchBudgetData();
+        } else {
+          showToast('Failed to add category', 'error');
+        }
+      });
 
       function renderBudgetHistory() {
         const historyBody = document.getElementById("budgetHistoryBody");
