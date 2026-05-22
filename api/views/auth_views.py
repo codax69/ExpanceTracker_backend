@@ -53,15 +53,24 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('home')
     if request.method == 'POST':
-        username = request.POST.get('username')
+        identifier = request.POST.get('identifier') or request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = None
+        if identifier:
+            if '@' in identifier:
+                user = User.objects.filter(email__iexact=identifier).first()
+            if user is None:
+                user = User.objects.filter(username__iexact=identifier).first()
+
+        if user is not None:
+            user = authenticate(request, username=user.username, password=password)
+
         if user is not None:
             login(request, user)
-            messages.success(request, f'Welcome back, {username}!')
+            messages.success(request, f'Welcome back, {user.username}!')
             return redirect('home')
         else:
-            messages.error(request, 'Invalid username or password')
+            messages.error(request, 'Invalid username/email or password')
 
     return render(request, 'login.html')
 
@@ -181,27 +190,38 @@ class JWTLoginView(APIView):
     POST /api/v1/auth/login
     Authenticates user and returns JWT tokens in HTTP-only cookies.
 
-    Body: { username, password }
+    Body: { identifier, password }
     """
     permission_classes = [AllowAny]
     authentication_classes = []
 
     def post(self, request):
-        username = request.data.get('username', '').strip()
+        identifier = request.data.get('identifier', '').strip() or request.data.get('username', '').strip()
         password = request.data.get('password', '')
 
-        if not username or not password:
-            return ApiResponse.error('username and password are required', 400)
+        if not identifier or not password:
+            return ApiResponse.error('identifier and password are required', 400)
 
-        user = authenticate(request, username=username, password=password)
+        user = None
+        if identifier:
+            # Prefer email lookup first when the identifier looks like an email
+            if '@' in identifier:
+                user = User.objects.filter(email__iexact=identifier).first()
+            if user is None:
+                user = User.objects.filter(username__iexact=identifier).first()
+
         if user is None:
             return ApiResponse.error('Invalid credentials', 401)
 
-        if not user.is_active:
+        authenticated_user = authenticate(request, username=user.username, password=password)
+        if authenticated_user is None:
+            return ApiResponse.error('Invalid credentials', 401)
+
+        if not authenticated_user.is_active:
             return ApiResponse.error('Account is disabled', 403)
 
         # Also log into Django session (so template pages work too)
-        login(request, user)
+        login(request, authenticated_user)
 
         # Generate JWT tokens
         tokens = get_tokens_for_user(user)

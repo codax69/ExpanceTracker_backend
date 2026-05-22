@@ -30,12 +30,12 @@ class Command(BaseCommand):
 
         self.stdout.write('Seeding categories...')
         categories_data = [
-            {'name': 'Food', 'icon': '🍔', 'color': '#10b981', 'monthly_budget': 500},
-            {'name': 'Transport', 'icon': '🚗', 'color': '#06b6d4', 'monthly_budget': 200},
-            {'name': 'Entertainment', 'icon': '🎬', 'color': '#8b5cf6', 'monthly_budget': 150},
-            {'name': 'Utilities', 'icon': '⚡', 'color': '#f59e0b', 'monthly_budget': 300},
-            {'name': 'Health', 'icon': '💪', 'color': '#ef4444', 'monthly_budget': 100},
-            {'name': 'Shopping', 'icon': '🛍️', 'color': '#ec4899', 'monthly_budget': 250},
+            {'name': 'Food', 'icon': 'ph-hamburger', 'color': '#10b981', 'monthly_budget': 500},
+            {'name': 'Transport', 'icon': 'ph-car', 'color': '#06b6d4', 'monthly_budget': 200},
+            {'name': 'Entertainment', 'icon': 'ph-film-strip', 'color': '#8b5cf6', 'monthly_budget': 150},
+            {'name': 'Utilities', 'icon': 'ph-lightning', 'color': '#f59e0b', 'monthly_budget': 300},
+            {'name': 'Health', 'icon': 'ph-barbell', 'color': '#ef4444', 'monthly_budget': 100},
+            {'name': 'Shopping', 'icon': 'ph-tote', 'color': '#ec4899', 'monthly_budget': 250},
         ]
         for cat_data in categories_data:
             Category.objects.get_or_create(name=cat_data['name'], defaults=cat_data)

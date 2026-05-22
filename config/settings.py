@@ -69,21 +69,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# ── Database (MySQL) ──
-# Source - https://stackoverflow.com/a/19189930
-# Posted by Andy, modified by community. See post 'Timeline' for change history
-# Retrieved 2026-05-22, License - CC BY-SA 4.0
+# ── Database (SQLite by default, MySQL optional) ──
+# Local development uses SQLite unless USE_MYSQL=True is set in .env.
+USE_MYSQL = os.getenv('USE_MYSQL', 'False').lower() in ('true', '1', 'yes')
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql', 
-        'NAME': 'expensetracker',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',   # Or an IP Address that your DB is hosted on
-        'PORT': '3306',
+if USE_MYSQL:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('MYSQL_DATABASE'),
+            'USER': os.getenv('MYSQL_USER'),
+            'PASSWORD': os.getenv('MYSQL_PASSWORD'),
+            'HOST': os.getenv('MYSQL_HOST'),
+            'PORT': os.getenv('MYSQL_PORT'),
+        }
     }
-}
+
 
 
 # ── Cache (for rate limiting) ──

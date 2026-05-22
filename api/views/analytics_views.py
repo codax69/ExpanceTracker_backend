@@ -379,7 +379,7 @@ class AnalyticsCategoryView(APIView):
                 'budget': budget,
                 'usagePercent': round((d['total'] / budget * 100), 2) if budget > 0 else 0,
                 'exceeded': budget > 0 and d['total'] > budget,
-                'icon': cat.icon if cat else '📦',
+                'icon': cat.icon if cat else 'ph-package',
                 'color': cat.color if cat else '#888',
             })
 

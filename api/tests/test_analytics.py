@@ -313,7 +313,7 @@ class AnalyticsCategoryTests(BaseAPITestCase):
         for item in data['data']:
             if item['category'] == 'Food':
                 self.assertEqual(item['budget'], 500.0)
-                self.assertEqual(item['icon'], '🍔')
+                self.assertEqual(item['icon'], 'ph-hamburger')
                 self.assertEqual(item['color'], '#10b981')
 
     def test_category_analytics_usage_percent_calculation(self):
@@ -355,7 +355,7 @@ class AnalyticsCategoryTests(BaseAPITestCase):
             (item for item in data['data'] if item['category'] == 'Mystery'), None
         )
         if mystery:
-            self.assertEqual(mystery['icon'], '📦')
+            self.assertEqual(mystery['icon'], 'ph-package')
             self.assertEqual(mystery['color'], '#888')
             self.assertEqual(mystery['budget'], 0)
             self.assertEqual(mystery['usagePercent'], 0)

@@ -16,15 +16,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--bg-primary);
+        background: var(--bg-page);
         position: relative;
         overflow-x: hidden;
       }
+      /* Soft background orbs */
       .bg-orb {
         position: fixed;
         border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0.15;
+        filter: blur(100px);
+        opacity: 0.05;
         animation: orbFloat 20s ease-in-out infinite;
         pointer-events: none;
         z-index: 0;
@@ -32,14 +33,14 @@
       .bg-orb-1 {
         width: 500px;
         height: 500px;
-        background: #8b5cf6;
+        background: var(--accent-primary);
         top: -120px;
         left: -100px;
       }
       .bg-orb-2 {
         width: 400px;
         height: 400px;
-        background: #10b981;
+        background: var(--accent-success);
         bottom: -80px;
         right: -80px;
         animation-delay: -7s;
@@ -75,13 +76,11 @@
         padding: 20px;
       }
       .auth-card {
-        background: var(--glass);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid var(--glass-border);
-        border-radius: var(--radius-xl);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-card);
         padding: 36px 36px;
-        box-shadow: var(--shadow-lg);
+        box-shadow: var(--shadow-card);
       }
       .auth-header {
         text-align: center;
@@ -90,24 +89,25 @@
       .auth-logo {
         width: 56px;
         height: 56px;
-        background: var(--gradient-purple);
-        border-radius: var(--radius-md);
+        background: var(--accent-primary);
+        border-radius: var(--radius-input);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 26px;
-        font-weight: 800;
+        font-weight: 600;
         color: #fff;
         margin: 0 auto 20px;
-        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(79, 110, 247, 0.2);
         transition: transform 0.3s ease;
       }
       .auth-logo:hover {
-        transform: scale(1.08) rotate(4deg);
+        transform: scale(1.05);
       }
       .auth-title {
-        font-size: 26px;
-        font-weight: 700;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--text-primary);
         margin-bottom: 8px;
         letter-spacing: -0.5px;
       }
@@ -122,7 +122,7 @@
         color: var(--text-secondary);
       }
       .auth-link {
-        color: var(--accent-emerald);
+        color: var(--accent-primary);
         text-decoration: none;
         font-weight: 600;
         transition: opacity 0.2s;
@@ -132,7 +132,7 @@
       }
       .auth-alert {
         padding: 12px 16px;
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-input);
         font-size: 13px;
         margin-bottom: 16px;
         display: none;
@@ -140,14 +140,14 @@
         line-height: 1.5;
       }
       .auth-alert.error {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.2);
+        background: rgba(244, 91, 91, 0.1);
+        color: var(--accent-danger);
+        border: 1px solid rgba(244, 91, 91, 0.2);
       }
       .auth-alert.success {
-        background: rgba(16, 185, 129, 0.1);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.2);
+        background: rgba(34, 196, 138, 0.1);
+        color: var(--accent-success);
+        border: 1px solid rgba(34, 196, 138, 0.2);
       }
 
       .password-wrapper {
@@ -160,7 +160,7 @@
         transform: translateY(-50%);
         background: none;
         border: none;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         cursor: pointer;
         padding: 4px;
         display: flex;
@@ -177,7 +177,7 @@
       .strength-bar {
         height: 4px;
         border-radius: 2px;
-        background: var(--bg-card);
+        background: var(--bg-page);
         overflow: hidden;
         margin-bottom: 4px;
       }
@@ -191,7 +191,7 @@
       }
       .strength-text {
         font-size: 11px;
-        color: var(--text-muted);
+        color: var(--text-secondary);
       }
 
       .btn.loading {
@@ -233,6 +233,7 @@
         }
         .form-row {
           grid-template-columns: 1fr;
+          gap: 0;
         }
         .bg-orb-3 {
           display: none;

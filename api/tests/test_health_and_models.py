@@ -43,9 +43,9 @@ class CategoryModelTests(TestCase):
     def test_create_category(self):
         """Should create category with all fields."""
         cat = Category.objects.create(
-            name='Food', icon='🍔', color='#10b981', monthly_budget=Decimal('500.00')
+            name='Food', icon='ph-hamburger', color='#10b981', monthly_budget=Decimal('500.00')
         )
-        self.assertEqual(str(cat), '🍔 Food')
+        self.assertEqual(str(cat), 'ph-hamburger Food')
 
     def test_category_name_unique(self):
         """Should enforce unique name constraint."""
@@ -56,7 +56,7 @@ class CategoryModelTests(TestCase):
     def test_category_defaults(self):
         """Should use default values for icon, color, budget."""
         cat = Category.objects.create(name='Misc')
-        self.assertEqual(cat.icon, '📦')
+        self.assertEqual(cat.icon, 'ph-package')
         self.assertEqual(cat.color, '#10b981')
         self.assertEqual(cat.monthly_budget, 0)
 

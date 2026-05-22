@@ -52,7 +52,7 @@ class CategoryCreateTests(BaseAPITestCase):
         """Should create category and return 201."""
         payload = {
             'name': 'Health',
-            'icon': '💪',
+            'icon': 'ph-barbell',
             'color': '#ef4444',
             'monthlyBudget': '100.00',
         }
@@ -60,7 +60,7 @@ class CategoryCreateTests(BaseAPITestCase):
         data = self.assert_success_response(response, 201)
         self.assertEqual(data['message'], 'Category created')
         self.assertEqual(data['data']['name'], 'Health')
-        self.assertEqual(data['data']['icon'], '💪')
+        self.assertEqual(data['data']['icon'], 'ph-barbell')
         self.assertEqual(data['data']['monthlyBudget'], 100.00)
 
     def test_create_category_with_defaults(self):
@@ -68,7 +68,7 @@ class CategoryCreateTests(BaseAPITestCase):
         payload = {'name': 'Misc'}
         response = self.client.post('/api/v1/categories', payload, format='json')
         data = self.assert_success_response(response, 201)
-        self.assertEqual(data['data']['icon'], '📦')
+        self.assertEqual(data['data']['icon'], 'ph-package')
         self.assertEqual(data['data']['color'], '#10b981')
         self.assertEqual(data['data']['monthlyBudget'], 0.0)
 
@@ -86,7 +86,7 @@ class CategoryCreateTests(BaseAPITestCase):
 
     def test_create_category_missing_name(self):
         """Should return 400 when name is missing."""
-        payload = {'icon': '🏠'}
+        payload = {'icon': 'ph-house'}
         response = self.client.post('/api/v1/categories', payload, format='json')
         self.assert_error_response(response, 400)
 
@@ -96,14 +96,14 @@ class CategoryUpdateTests(BaseAPITestCase):
 
     def test_update_category_success(self):
         """Should update category fields."""
-        payload = {'name': 'Fast Food', 'icon': '🍟', 'color': '#ff6600'}
+        payload = {'name': 'Fast Food', 'icon': 'ph-french-fries', 'color': '#ff6600'}
         response = self.client.put(
             f'/api/v1/categories/{self.cat_food.id}', payload, format='json'
         )
         data = self.assert_success_response(response)
         self.assertEqual(data['message'], 'Category updated')
         self.assertEqual(data['data']['name'], 'Fast Food')
-        self.assertEqual(data['data']['icon'], '🍟')
+        self.assertEqual(data['data']['icon'], 'ph-french-fries')
 
     def test_update_category_partial(self):
         """Should partially update category."""

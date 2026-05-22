@@ -19,7 +19,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--bg-primary);
+        background: var(--bg-page);
         position: relative;
         overflow: hidden;
       }
@@ -27,8 +27,8 @@
       .bg-orb {
         position: fixed;
         border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0.15;
+        filter: blur(100px);
+        opacity: 0.05;
         animation: orbFloat 20s ease-in-out infinite;
         pointer-events: none;
         z-index: 0;
@@ -36,7 +36,7 @@
       .bg-orb-1 {
         width: 500px;
         height: 500px;
-        background: #10b981;
+        background: var(--accent-primary);
         top: -120px;
         right: -100px;
         animation-delay: 0s;
@@ -44,7 +44,7 @@
       .bg-orb-2 {
         width: 400px;
         height: 400px;
-        background: #8b5cf6;
+        background: var(--accent-success);
         bottom: -80px;
         left: -80px;
         animation-delay: -7s;
@@ -81,15 +81,11 @@
         padding: 20px;
       }
       .auth-card {
-        background: var(--glass);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid var(--glass-border);
-        border-radius: var(--radius-xl);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-card);
         padding: 40px 36px;
-        box-shadow:
-          var(--shadow-lg),
-          0 0 60px rgba(16, 185, 129, 0.04);
+        box-shadow: var(--shadow-card);
       }
       .auth-header {
         text-align: center;
@@ -98,24 +94,25 @@
       .auth-logo {
         width: 56px;
         height: 56px;
-        background: var(--gradient-emerald);
-        border-radius: var(--radius-md);
+        background: var(--accent-primary);
+        border-radius: var(--radius-input);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 26px;
-        font-weight: 800;
+        font-weight: 600;
         color: #fff;
         margin: 0 auto 20px;
-        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 4px 12px rgba(79, 110, 247, 0.2);
         transition: transform 0.3s ease;
       }
       .auth-logo:hover {
-        transform: scale(1.08) rotate(-4deg);
+        transform: scale(1.05);
       }
       .auth-title {
-        font-size: 26px;
-        font-weight: 700;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--text-primary);
         margin-bottom: 8px;
         letter-spacing: -0.5px;
       }
@@ -131,7 +128,7 @@
         color: var(--text-secondary);
       }
       .auth-link {
-        color: var(--accent-emerald);
+        color: var(--accent-primary);
         text-decoration: none;
         font-weight: 600;
         transition: opacity 0.2s;
@@ -144,7 +141,7 @@
         align-items: center;
         gap: 16px;
         margin: 24px 0;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         font-size: 12px;
       }
       .auth-divider::before,
@@ -152,7 +149,7 @@
         content: "";
         flex: 1;
         height: 1px;
-        background: var(--glass-border);
+        background: var(--border-color);
       }
 
       /* Password toggle */
@@ -166,7 +163,7 @@
         transform: translateY(-50%);
         background: none;
         border: none;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         cursor: pointer;
         padding: 4px;
         display: flex;
@@ -180,7 +177,7 @@
       /* Alert messages */
       .auth-alert {
         padding: 12px 16px;
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-input);
         font-size: 13px;
         margin-bottom: 20px;
         display: none;
@@ -188,14 +185,14 @@
         line-height: 1.5;
       }
       .auth-alert.error {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.2);
+        background: rgba(244, 91, 91, 0.1);
+        color: var(--accent-danger);
+        border: 1px solid rgba(244, 91, 91, 0.2);
       }
       .auth-alert.success {
-        background: rgba(16, 185, 129, 0.1);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.2);
+        background: rgba(34, 196, 138, 0.1);
+        color: var(--accent-success);
+        border: 1px solid rgba(34, 196, 138, 0.2);
       }
 
       /* Loading state */
@@ -276,7 +273,7 @@
             <label class="form-label">Username or Email</label>
             <input
               type="text"
-              name="username"
+              name="identifier"
               class="form-input"
               id="loginIdentifier"
               placeholder="Enter username or email"
@@ -343,6 +340,8 @@
             <div class="btn-spinner"></div>
           </button>
         </form>
+
+        <div class="auth-divider">or</div>
 
         <div class="auth-footer">
           Don't have an account?

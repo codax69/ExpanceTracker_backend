@@ -8,6 +8,8 @@
   <meta name="description" content="ExpenseIQ - Premium Expense Tracker">
   <title>ExpenseIQ — Expenses</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
     /* Premium Page Specific Styles */
@@ -28,18 +30,6 @@
       }
     }
 
-    /* KPI Enhancements */
-    .kpi-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      backdrop-filter: blur(12px);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
     .kpi-budget-info {
       display: flex;
       justify-content: space-between;
@@ -53,39 +43,13 @@
       color: var(--text-primary);
     }
 
-    .progress-bar {
-      height: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-top: auto;
-    }
-
-    .progress-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.8s ease;
-    }
-
-    .progress-fill.healthy {
-      background: var(--accent-emerald);
-    }
-
-    .progress-fill.warning {
-      background: var(--accent-orange);
-    }
-
-    .progress-fill.danger {
-      background: var(--accent-red);
-    }
-
     /* Calendar Enhancements */
     .calendar-container {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
       padding: 24px;
-      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-card);
     }
 
     .calendar-header {
@@ -115,15 +79,15 @@
     .calendar-weekday {
       font-size: 12px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       padding-bottom: 8px;
-      border-bottom: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--border-color);
     }
 
     .calendar-day {
       position: relative;
       padding: 12px 4px;
-      border-radius: var(--radius-md);
+      border-radius: var(--radius-input);
       border: 1px solid transparent;
       cursor: pointer;
       transition: var(--transition);
@@ -132,13 +96,13 @@
       align-items: center;
       justify-content: space-between;
       min-height: 60px;
-      background: rgba(255, 255, 255, 0.01);
+      background: var(--bg-page);
     }
 
     .calendar-day:hover {
-      background: var(--bg-card-hover);
+      background: var(--bg-card);
       transform: translateY(-2px);
-      border-color: var(--glass-border);
+      border-color: var(--border-color);
     }
 
     .calendar-day.empty {
@@ -148,13 +112,13 @@
     }
 
     .calendar-day.today {
-      border-color: var(--accent-cyan);
-      background: rgba(6, 182, 212, 0.05);
+      border-color: var(--accent-primary);
+      background: rgba(79, 110, 247, 0.05);
     }
 
     .calendar-day.active {
-      background: var(--accent-purple-glow);
-      border-color: var(--accent-purple);
+      background: rgba(79, 110, 247, 0.1);
+      border-color: var(--accent-primary);
     }
 
     .calendar-day-num {
@@ -177,38 +141,38 @@
     }
 
     .calendar-indicator.healthy {
-      background: var(--accent-emerald);
+      background: var(--accent-success);
     }
 
     .calendar-indicator.warning {
-      background: var(--accent-orange);
+      background: #f59e0b;
     }
 
     .calendar-indicator.danger {
-      background: var(--accent-red);
+      background: var(--accent-danger);
     }
 
     /* Analytics Cards */
     .analytics-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
       padding: 20px;
-      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-card);
     }
 
     /* History Panel */
     .history-container {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
       padding: 24px;
-      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-card);
     }
 
     /* Floating Action Button Overrides */
     .fab {
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 4px 20px rgba(79, 110, 247, 0.3);
     }
 
     /* Custom Form Styling */
@@ -222,6 +186,12 @@
       .form-grid {
         grid-template-columns: 1fr;
       }
+    }
+
+    .form-error {
+      font-size: 12px;
+      color: var(--accent-danger);
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -367,6 +337,11 @@
               <option value="Bank Transfer">🏦 Bank Transfer</option>
             </select>
           </div>
+          <div>
+            <select class="form-select" id="categoryFilter" style="width: auto;">
+              <option value="all">All Categories</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -436,12 +411,6 @@
               <label class="form-label">Category *</label>
               <select class="form-select" id="fCategory" required>
                 <option value="">Select category</option>
-                <option value="Food">🍔 Food</option>
-                <option value="Transport">🚗 Transport</option>
-                <option value="Entertainment">🎬 Entertainment</option>
-                <option value="Utilities">⚡ Utilities</option>
-                <option value="Health">💪 Health</option>
-                <option value="Shopping">🛍️ Shopping</option>
               </select>
               <div class="form-error" id="errCategory"></div>
             </div>
@@ -832,21 +801,32 @@
       tbody.innerHTML = '';
 
       if (pageData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No expenses found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);">No expenses found</td></tr>`;
       } else {
         pageData.forEach(exp => {
           const cat = categories.find(c => c.name === exp.category);
           const methodStr = exp.paymentMethod || exp.method || 'N/A';
+          
+          const catName = exp.category || 'Other';
+          let badgeClass = 'badge-utilities';
+          const lowerCat = catName.toLowerCase();
+          if (lowerCat.includes("food")) badgeClass = "badge-food";
+          else if (lowerCat.includes("trans")) badgeClass = "badge-transport";
+          else if (lowerCat.includes("enter")) badgeClass = "badge-entertainment";
+          else if (lowerCat.includes("util")) badgeClass = "badge-utilities";
+          else if (lowerCat.includes("heal")) badgeClass = "badge-health";
+          else if (lowerCat.includes("shop")) badgeClass = "badge-shopping";
+
           const row = document.createElement('tr');
           row.innerHTML = `
             <td style="color:var(--text-primary);font-weight:500">${exp.title}</td>
-            <td><span class="badge badge-cyan">${cat ? cat.icon : '📦'} ${exp.category}</span></td>
+            <td><span class="badge ${badgeClass}"><i class="ph ${cat ? cat.icon : 'ph-package'}"></i> ${exp.category}</span></td>
             <td>${new Date(exp.expenseDate || exp.date).toLocaleString()}</td>
             <td>${methodStr}</td>
-            <td style="color:var(--accent-red);font-weight:600">-${formatINR(exp.amount)}</td>
+            <td style="color:var(--accent-danger);font-weight:600">-${formatINR(exp.amount)}</td>
             <td>
               <button class="btn btn-sm btn-secondary" onclick="editExpense(${exp.id})">Edit</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteExpense(${exp.id})">Del</button>
+              <button class="btn btn-sm btn-danger-ghost" onclick="deleteExpense(${exp.id})">Delete</button>
             </td>
           `;
           tbody.appendChild(row);
@@ -857,27 +837,38 @@
       const mobileView = document.getElementById('mobileExpenseCards');
       mobileView.innerHTML = '';
       if (pageData.length === 0) {
-        mobileView.innerHTML = `<div style="text-align:center;color:var(--text-muted);">No expenses found</div>`;
+        mobileView.innerHTML = `<div style="text-align:center;color:var(--text-secondary);">No expenses found</div>`;
       } else {
         pageData.forEach(exp => {
           const cat = categories.find(c => c.name === exp.category);
           const methodStr = exp.paymentMethod || exp.method || 'N/A';
+          
+          const catName = exp.category || 'Other';
+          let badgeClass = 'badge-utilities';
+          const lowerCat = catName.toLowerCase();
+          if (lowerCat.includes("food")) badgeClass = "badge-food";
+          else if (lowerCat.includes("trans")) badgeClass = "badge-transport";
+          else if (lowerCat.includes("enter")) badgeClass = "badge-entertainment";
+          else if (lowerCat.includes("util")) badgeClass = "badge-utilities";
+          else if (lowerCat.includes("heal")) badgeClass = "badge-health";
+          else if (lowerCat.includes("shop")) badgeClass = "badge-shopping";
+
           const card = document.createElement('div');
           card.className = 'card';
           card.style.padding = '16px';
           card.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
               <span style="font-weight:600">${exp.title}</span>
-              <span style="color:var(--accent-red);font-weight:700">-${formatINR(exp.amount)}</span>
+              <span style="color:var(--accent-danger);font-weight:700">-${formatINR(exp.amount)}</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;">
               <div>
-                <span class="badge badge-cyan">${cat ? cat.icon : '📦'} ${exp.category}</span>
-                <span style="font-size:12px;color:var(--text-muted)">${methodStr}</span>
+                <span class="badge ${badgeClass}"><i class="ph ${cat ? cat.icon : 'ph-package'}"></i> ${exp.category}</span>
+                <span style="font-size:12px;color:var(--text-secondary)">${methodStr}</span>
               </div>
-              <div>
+              <div style="display:flex; gap:8px;">
                 <button class="btn btn-sm btn-secondary" onclick="editExpense(${exp.id})">Edit</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteExpense(${exp.id})">Del</button>
+                <button class="btn btn-sm btn-danger-ghost" onclick="deleteExpense(${exp.id})">Delete</button>
               </div>
             </div>
           `;
@@ -920,15 +911,8 @@
       // Collect unique categories from expenses
       let activeCategories = [...categories];
       expenses.forEach(e => {
-        if (!activeCategories.find(c => c.name === e.category)) {
-          let icon = '📦';
-          if (e.category === 'Food') icon = '🍔';
-          else if (e.category === 'Transport') icon = '🚗';
-          else if (e.category === 'Entertainment') icon = '🎬';
-          else if (e.category === 'Utilities') icon = '⚡';
-          else if (e.category === 'Health') icon = '💪';
-          else if (e.category === 'Shopping') icon = '🛍️';
-          activeCategories.push({ name: e.category, icon: icon });
+        if (e.category && !activeCategories.find(c => c.name === e.category)) {
+          activeCategories.push({ name: e.category, icon: '📦' });
         }
       });
 
@@ -989,7 +973,7 @@
         item.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 6px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 16px;">${cat.icon || '📦'}</span>
+              <span style="font-size: 16px; display: inline-flex; align-items: center;"><i class="ph ${cat.icon || 'ph-package'}" style="font-size: 18px;"></i></span>
               <span style="font-weight: 500; color: var(--text-primary);">${cat.name}</span>
             </div>
             <div style="text-align: right;">
@@ -1023,6 +1007,22 @@
             AppData.categories = catData;
             categories = [...AppData.categories];
           }
+        }
+        // Populate Add/Edit Form Category dropdown
+        const fCategory = document.getElementById('fCategory');
+        if (fCategory) {
+          fCategory.innerHTML = '<option value="">Select category</option>';
+          categories.forEach(c => {
+            fCategory.innerHTML += `<option value="${c.name}"><i class="ph ${c.icon || 'ph-package'}"></i> ${c.name}</option>`;
+          });
+        }
+        // Populate Category Filter dropdown
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+          categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+          categories.forEach(c => {
+            categoryFilter.innerHTML += `<option value="${c.name}"><i class="ph ${c.icon || 'ph-package'}"></i> ${c.name}</option>`;
+          });
         }
       } catch (e) {
         console.error('Failed to init expense page', e);
@@ -1106,7 +1106,7 @@
         formData.append('title', title.trim());
         formData.append('amount', parseFloat(amount));
         formData.append('category', category);
-        formData.append('expenseDate', date + ':00');
+        formData.append('expense_date', new Date(date).toISOString());
         formData.append('paymentMethod', method || 'Cash');
         formData.append('notes', notes || '');
 
@@ -1256,6 +1256,12 @@
 
     document.getElementById('paymentMethodFilter').addEventListener('change', (e) => {
       activePaymentFilter = e.target.value;
+      currentPage = 1;
+      renderExpenses();
+    });
+
+    document.getElementById('categoryFilter').addEventListener('change', (e) => {
+      activeCategoryFilter = e.target.value;
       currentPage = 1;
       renderExpenses();
     });

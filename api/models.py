@@ -9,7 +9,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class Category(models.Model):
     """Expense category with optional monthly budget."""
     name = models.CharField(max_length=100, unique=True)
-    icon = models.CharField(max_length=10, default='📦')
+    icon = models.CharField(max_length=50, default='ph-package')
     color = models.CharField(max_length=20, default='#10b981')
     monthly_budget = models.DecimalField(
         max_digits=12, decimal_places=2, default=0,
@@ -55,7 +55,6 @@ class Expense(models.Model):
     payment_method = models.CharField(
         max_length=20, choices=PAYMENT_METHOD_CHOICES, default='Cash'
     )
-    description = models.TextField(blank=True, default='')
     notes = models.TextField(blank=True, default='')
     receipt_image = models.ImageField(upload_to='receipts/', blank=True, null=True)
     expense_date = models.DateTimeField(db_index=True)

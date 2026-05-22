@@ -10,6 +10,9 @@
     />
     <title>ExpenseIQ — Dashboard</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- ApexCharts CDN -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   </head>
 
@@ -30,9 +33,9 @@
             margin-bottom: 24px;
             background: var(--bg-card);
             padding: 16px 20px;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-sm);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
           "
         >
           <div class="filter-tabs" id="dashboardTimeFilters">
@@ -62,12 +65,10 @@
                 padding: 6px 12px;
                 font-size: 13px;
                 height: 32px;
-                border-radius: var(--radius-md);
+                border-radius: var(--radius-input);
               "
             />
-            <span style="color: var(--text-secondary); font-size: 13px"
-              >to</span
-            >
+            <span style="color: var(--text-secondary); font-size: 13px">to</span>
             <input
               type="date"
               class="form-input"
@@ -76,7 +77,7 @@
                 padding: 6px 12px;
                 font-size: 13px;
                 height: 32px;
-                border-radius: var(--radius-md);
+                border-radius: var(--radius-input);
               "
             />
             <button
@@ -86,7 +87,7 @@
                 padding: 6px 16px;
                 font-size: 13px;
                 height: 32px;
-                border-radius: var(--radius-md);
+                border-radius: var(--radius-btn);
               "
             >
               Apply
@@ -98,7 +99,7 @@
         <div class="kpi-grid">
           <div class="kpi-card emerald fade-in stagger-1">
             <div class="kpi-header">
-              <div class="kpi-label">Total Budget</div>
+              <div class="kpi-label" id="kpiBudgetLabel">Total Budget</div>
               <div class="kpi-icon emerald">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12" /><path d="M20 12v4h-4a2 2 0 0 1 0 -4h4" /></svg>
               </div>
@@ -118,7 +119,7 @@
           </div>
           <div class="kpi-card cyan fade-in stagger-3">
             <div class="kpi-header">
-              <div class="kpi-label">Remaining Balance</div>
+              <div class="kpi-label" id="kpiBalanceLabel">Remaining Balance</div>
               <div class="kpi-icon cyan">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0" /><path d="M3 10l18 0" /><path d="M5 6l7 -3l7 3" /><path d="M4 10l0 11" /><path d="M20 10l0 11" /><path d="M8 14l0 3" /><path d="M12 14l0 3" /><path d="M16 14l0 3" /></svg>
               </div>
@@ -178,7 +179,7 @@
           </div>
         </div>
 
-        <!-- Charts Row -->
+        <!-- Charts Row 1 -->
         <div class="charts-grid">
           <div class="card fade-in" style="display:flex; flex-direction:column; height:100%;">
             <div class="card-header">
@@ -200,6 +201,7 @@
           </div>
         </div>
 
+        <!-- Charts Row 2 -->
         <div class="charts-grid">
           <div class="card fade-in" style="display:flex; flex-direction:column; height:100%;">
             <div class="card-header">
@@ -225,9 +227,7 @@
         <div class="card fade-in">
           <div class="card-header">
             <div class="card-title">Recent Expenses</div>
-            <a href="{% url 'expenses' %}" class="btn btn-sm btn-secondary"
-              >View All</a
-            >
+            <a href="{% url 'expenses' %}" class="btn btn-sm btn-secondary">View All</a>
           </div>
           <div class="table-wrapper">
             <table>
@@ -250,7 +250,7 @@
       <!-- Quick Add FAB -->
       <button
         class="fab"
-        onclick="openModal('addExpenseModal')"
+        onclick="openQuickAddModal()"
         title="Quick Add Expense"
       >
         +
@@ -265,15 +265,17 @@
               ✕
             </button>
           </div>
-          <form id="quickExpenseForm">
+          <form id="quickExpenseForm" novalidate>
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Title *</label>
                 <input type="text" class="form-input" placeholder="e.g. Grocery" required id="qTitle" />
+                <div class="form-error-text" id="errorTitle" style="display:none;">Please enter a title</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Amount ($) *</label>
                 <input type="number" class="form-input" placeholder="0.00" required id="qAmount" min="0.01" step="0.01" />
+                <div class="form-error-text" id="errorAmount" style="display:none;">Please enter a valid amount (> 0)</div>
               </div>
             </div>
 
@@ -282,13 +284,8 @@
                 <label class="form-label">Category *</label>
                 <select class="form-select" id="qCategory" required>
                   <option value="">Select category</option>
-                  <option value="Food">🍔 Food</option>
-                  <option value="Transport">🚗 Transport</option>
-                  <option value="Entertainment">🎬 Entertainment</option>
-                  <option value="Utilities">⚡ Utilities</option>
-                  <option value="Health">💪 Health</option>
-                  <option value="Shopping">🛍️ Shopping</option>
                 </select>
+                <div class="form-error-text" id="errorCategory" style="display:none;">Please select a category</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Payment Method</label>
@@ -305,6 +302,7 @@
               <div class="form-group">
                 <label class="form-label">Date & Time *</label>
                 <input type="datetime-local" class="form-input" id="qDate" required />
+                <div class="form-error-text" id="errorDate" style="display:none;">Please select a date and time</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Notes</label>
@@ -313,7 +311,7 @@
             </div>
 
             <div style="display: flex; gap: 12px; margin-top: 24px">
-              <button type="submit" class="btn btn-primary" style="flex: 1">
+              <button type="submit" class="btn btn-primary" style="flex: 1" id="btnSubmitQuickExpense">
                 Save Expense
               </button>
               <button
@@ -346,13 +344,32 @@
         renderBottomNav("dashboard");
       injectLayout("dashboard");
 
+      let dashboardCategories = [];
+
       // Dashboard initialization
       async function initDashboard(startDate, endDate) {
-        // Show loading states or keep empty initially
-
         // Wait for auth to be ready
         if (typeof Auth !== "undefined") {
           await Auth.init();
+        }
+
+        // Fetch dynamic categories
+        try {
+          const catRes = await Auth.apiFetch("/api/v1/categories");
+          if (catRes && catRes.success) {
+            dashboardCategories = catRes.data?.results || catRes.data || catRes.results || (Array.isArray(catRes) ? catRes : []);
+          }
+        } catch (e) {
+          console.error("Failed to load categories", e);
+        }
+
+        // Populate Category Dropdown
+        const qCategorySelect = document.getElementById("qCategory");
+        if (qCategorySelect) {
+          qCategorySelect.innerHTML = '<option value="">Select category</option>';
+          dashboardCategories.forEach((c) => {
+          qCategorySelect.innerHTML += `<option value="${c.name}"><i class="ph ${c.icon || 'ph-package'}"></i> ${c.name}</option>`;
+          });
         }
 
         // Fetch dynamic data
@@ -362,15 +379,23 @@
         // Render KPIs
         if (AppData.kpis) {
           // Use Budget API if a global budget is set, otherwise fallback to kpis.totalIncome
-          const totalBudget =
-            AppData.budget && AppData.budget.budget > 0
+          const hasBudget = AppData.budget && AppData.budget.budget > 0;
+          const totalBudget = hasBudget
               ? AppData.budget.budget
               : AppData.kpis.totalIncome || 0;
 
-          const remainingBalance =
-            AppData.budget && AppData.budget.budget > 0
+          const remainingBalance = hasBudget
               ? AppData.budget.remaining
               : AppData.kpis.remainingBalance || 0;
+
+          const budgetLabelEl = document.getElementById("kpiBudgetLabel");
+          if (budgetLabelEl) {
+            budgetLabelEl.textContent = hasBudget ? "Total Budget" : "Total Income";
+          }
+          const balanceLabelEl = document.getElementById("kpiBalanceLabel");
+          if (balanceLabelEl) {
+            balanceLabelEl.textContent = hasBudget ? "Remaining Budget" : "Remaining Balance";
+          }
 
           document.getElementById("kpiBudget").textContent =
             Settings.formatCurrency(totalBudget);
@@ -388,6 +413,10 @@
           );
           document.getElementById("kpiWeekly").textContent =
             Settings.formatCurrency(AppData.kpis.weeklyExpense || 0);
+          document.getElementById("kpiDailyAvg").textContent =
+            Settings.formatCurrency(AppData.kpis.dailyAverage || 0);
+          document.getElementById("kpiSubs").textContent =
+            AppData.kpis.activeSubs !== undefined ? AppData.kpis.activeSubs : 4;
         }
 
         // Render Recent Transactions
@@ -395,17 +424,17 @@
         tbody.innerHTML = "";
         if (AppData.expenses && AppData.expenses.length > 0) {
           AppData.expenses.slice(0, 7).forEach((e) => {
-            const cat = AppData.categories.find(
-              (c) => c.category === e.category || c.name === e.category,
+            const cat = dashboardCategories.find(
+              (c) => c.name === e.category,
             );
             const badgeClass = "badge-emerald"; // API could provide status
             tbody.innerHTML += `
             <tr>
               <td style="color:var(--text-primary);font-weight:500">${e.title}</td>
-              <td><span class="badge badge-cyan">${cat ? cat.icon || "\ud83d\udce6" : "\ud83d\udce6"} ${e.category}</span></td>
-              <td>${Settings.formatDate(e.createdAt)}</td>
-              <td>${e.payment_method || "Cash"}</td>
-              <td style="color:var(--accent-red);font-weight:600">-${Settings.formatCurrency(e.amount)}</td>
+              <td><span class="badge badge-cyan"><i class="ph ${cat ? cat.icon || 'ph-package' : 'ph-package'}"></i> ${e.category}</span></td>
+              <td>${Settings.formatDate(e.expenseDate || e.createdAt)}</td>
+              <td>${e.paymentMethod || e.payment_method || "Cash"}</td>
+              <td style="color:var(--accent-danger);font-weight:600">-${Settings.formatCurrency(e.amount)}</td>
               <td><span class="badge ${badgeClass}">Completed</span></td>
             </tr>`;
           });
@@ -415,16 +444,25 @@
         }
 
         // Charts
+        const isLight = () => document.body.classList.contains("light-mode");
         const gridColor = () =>
-          document.body.classList.contains("light-mode")
-            ? "rgba(0,0,0,0.06)"
-            : "rgba(255,255,255,0.06)";
+          isLight() ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)";
         const textColor = () =>
-          document.body.classList.contains("light-mode")
-            ? "#64648a"
-            : "#8a8a9a";
+          isLight() ? "#273F4F" : "#D7D7D7";
         const chartMode = () =>
-          document.body.classList.contains("light-mode") ? "light" : "dark";
+          isLight() ? "light" : "dark";
+
+        // Dynamic chart colors mapping — brand palette
+        const primaryColor = () => "#FE7743";
+        const successColor = () => "#2CB67D";
+        const dangerColor  = () => "#E84545";
+        const purpleColor  = () => isLight() ? "#8B5CF6" : "#B39DDB";
+        const cyanColor    = () => "#447D9B";
+        const orangeColor  = () => "#FE7743";
+
+        const getDonutColors = () => isLight()
+          ? ["#FE7743", "#447D9B", "#8B5CF6", "#2CB67D", "#E84545", "#F59E0B"]
+          : ["#FE7743", "#6BB5D4", "#B39DDB", "#2CB67D", "#F07070", "#FFCC80"];
 
         const apexDefaults = () => ({
           chart: {
@@ -444,14 +482,14 @@
           xaxis: {
             axisBorder: { show: false },
             axisTicks: { show: false },
-            labels: { style: { colors: textColor(), fontFamily: "Inter" } },
+            labels: { style: { colors: textColor(), fontFamily: "DM Sans" } },
           },
           yaxis: {
-            labels: { style: { colors: textColor(), fontFamily: "Inter" } },
+            labels: { style: { colors: textColor(), fontFamily: "DM Sans" } },
           },
           legend: {
             labels: { colors: textColor(), useSeriesColors: false },
-            fontFamily: "Inter",
+            fontFamily: "DM Sans",
           },
         });
 
@@ -462,13 +500,13 @@
           series: [{ name: "Expenses", data: monthlyData.map((d) => d.total) }],
           chart: {
             type: "bar",
-            height: "100%",
+            height: 280,
             parentHeightOffset: 0,
             background: "transparent",
             toolbar: { show: false },
           },
           plotOptions: { bar: { borderRadius: 4, columnWidth: "60%" } },
-          colors: ["#10b981"],
+          colors: [primaryColor()],
           xaxis: {
             ...apexDefaults().xaxis,
             categories: monthlyData.map((d) => d.label),
@@ -491,12 +529,12 @@
           ],
           chart: {
             type: "area",
-            height: "100%",
+            height: 280,
             parentHeightOffset: 0,
             background: "transparent",
             toolbar: { show: false },
           },
-          colors: ["#8b5cf6", "#06b6d4"],
+          colors: [purpleColor(), cyanColor()],
           fill: {
             type: "gradient",
             gradient: {
@@ -535,18 +573,11 @@
               : ["No Data"],
           chart: {
             type: "donut",
-            height: "100%",
+            height: 280,
             parentHeightOffset: 0,
             background: "transparent",
           },
-          colors: [
-            "#10b981",
-            "#06b6d4",
-            "#8b5cf6",
-            "#f59e0b",
-            "#ef4444",
-            "#ec4899",
-          ],
+          colors: getDonutColors(),
           stroke: { show: false },
           plotOptions: { pie: { donut: { size: "65%" } } },
           legend: { ...apexDefaults().legend, position: "right" },
@@ -568,12 +599,12 @@
           ],
           chart: {
             type: "area",
-            height: "100%",
+            height: 280,
             parentHeightOffset: 0,
             background: "transparent",
             toolbar: { show: false },
           },
-          colors: ["#10b981", "#8b5cf6"],
+          colors: [successColor(), purpleColor()],
           fill: {
             type: "gradient",
             gradient: {
@@ -607,70 +638,175 @@
 
       // Update charts on theme change
       function updateChartsTheme() {
-        const mode = document.body.classList.contains("light-mode")
-          ? "light"
-          : "dark";
+        const mode = document.body.classList.contains("light-mode") ? "light" : "dark";
         const gridClr = document.body.classList.contains("light-mode")
           ? "rgba(0,0,0,0.06)"
           : "rgba(255,255,255,0.06)";
         const textClr = document.body.classList.contains("light-mode")
-          ? "#64648a"
-          : "#8a8a9a";
+          ? "#273F4F"
+          : "#D7D7D7";
+
+        const primaryClr = "#FE7743";
+        const successClr = "#2CB67D";
+        const purpleClr  = document.body.classList.contains("light-mode") ? "#8B5CF6" : "#B39DDB";
+        const cyanClr    = "#447D9B";
+
+        const donutColors = document.body.classList.contains("light-mode")
+          ? ["#FE7743", "#447D9B", "#8B5CF6", "#2CB67D", "#E84545", "#F59E0B"]
+          : ["#FE7743", "#6BB5D4", "#B39DDB", "#2CB67D", "#F07070", "#FFCC80"];
+
         const updateOptions = {
           theme: { mode: mode },
           tooltip: { theme: mode },
           grid: { borderColor: gridClr },
-          xaxis: { labels: { style: { colors: textClr } } },
-          yaxis: { labels: { style: { colors: textClr } } },
-          legend: { labels: { colors: textClr } },
+          xaxis: { labels: { style: { colors: textClr, fontFamily: "DM Sans" } } },
+          yaxis: { labels: { style: { colors: textClr, fontFamily: "DM Sans" } } },
+          legend: { labels: { colors: textClr }, fontFamily: "DM Sans" },
         };
+
         if (window.chartMonthlyBar)
-          window.chartMonthlyBar.updateOptions(updateOptions);
+          window.chartMonthlyBar.updateOptions({ ...updateOptions, colors: [primaryClr] });
         if (window.chartWeeklyLine)
-          window.chartWeeklyLine.updateOptions(updateOptions);
+          window.chartWeeklyLine.updateOptions({ ...updateOptions, colors: [purpleClr, cyanClr] });
         if (window.chartIncExpArea)
-          window.chartIncExpArea.updateOptions(updateOptions);
+          window.chartIncExpArea.updateOptions({ ...updateOptions, colors: [successClr, purpleClr] });
         if (window.chartCatPie)
           window.chartCatPie.updateOptions({
             theme: { mode: mode },
             tooltip: { theme: mode },
-            legend: { labels: { colors: textClr } },
+            legend: { labels: { colors: textClr }, fontFamily: "DM Sans" },
+            colors: donutColors
           });
       }
 
-      // Quick expense form
+      function setLocalDatetime() {
+        const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+        return (new Date(Date.now() - tzOffset)).toISOString().slice(0, 16);
+      }
+
+      window.openQuickAddModal = function () {
+        // Reset Quick Add Form
+        const form = document.getElementById("quickExpenseForm");
+        if (form) {
+          form.reset();
+          
+          // Re-enable inputs
+          const amountInput = document.getElementById("qAmount");
+          const titleInput = document.getElementById("qTitle");
+          const categorySelect = document.getElementById("qCategory");
+          const dateInput = document.getElementById("qDate");
+          const methodSelect = document.getElementById("qMethod");
+          const notesInput = document.getElementById("qNotes");
+          const formInputs = [amountInput, titleInput, categorySelect, dateInput, methodSelect, notesInput];
+          formInputs.forEach(input => { if (input) input.disabled = false; });
+          
+          const submitBtn = document.getElementById("btnSubmitQuickExpense");
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Save Expense";
+          }
+          
+          // Reset errors
+          document.getElementById("errorTitle").style.display = "none";
+          document.getElementById("errorAmount").style.display = "none";
+          document.getElementById("errorCategory").style.display = "none";
+          document.getElementById("errorDate").style.display = "none";
+          formInputs.forEach(input => { if (input) input.classList.remove("error"); });
+        }
+        
+        // Set date to today's local date/time
+        const dateInput = document.getElementById("qDate");
+        if (dateInput) {
+          dateInput.value = setLocalDatetime();
+        }
+        
+        openModal('addExpenseModal');
+      };
+
+      // Quick expense form with Inline Validation & UX loading states
       document
         .getElementById("quickExpenseForm")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
-          const amount = document.getElementById("qAmount").value;
-          const title = document.getElementById("qTitle").value;
-          const category = document.getElementById("qCategory").value;
-          const date = document.getElementById("qDate").value;
-          const method = document.getElementById("qMethod").value;
-          const notes = document.getElementById("qNotes").value;
+          
+          const amountInput = document.getElementById("qAmount");
+          const titleInput = document.getElementById("qTitle");
+          const categorySelect = document.getElementById("qCategory");
+          const dateInput = document.getElementById("qDate");
+          const methodSelect = document.getElementById("qMethod");
+          const notesInput = document.getElementById("qNotes");
 
-          const res = await Auth.apiFetch("/api/v1/expenses/", {
-            method: "POST",
-            body: JSON.stringify({
-              title,
-              amount,
-              category,
-              expense_date: date,
-              payment_method: method || "Cash",
-              notes: notes,
-              status: "completed",
-            }),
-          });
+          // Reset errors
+          document.getElementById("errorTitle").style.display = "none";
+          document.getElementById("errorAmount").style.display = "none";
+          document.getElementById("errorCategory").style.display = "none";
+          document.getElementById("errorDate").style.display = "none";
+          amountInput.classList.remove("error");
+          titleInput.classList.remove("error");
+          categorySelect.classList.remove("error");
+          dateInput.classList.remove("error");
 
-          if (res && res.success) {
-            showToast("Expense added successfully!", "success");
-            closeModal("addExpenseModal");
-            e.target.reset();
-            // Refresh dashboard data
-            initDashboard();
-          } else {
-            showToast("Failed to add expense", "error");
+          let isValid = true;
+
+          if (!titleInput.value.trim()) {
+            document.getElementById("errorTitle").style.display = "block";
+            titleInput.classList.add("error");
+            isValid = false;
+          }
+          if (!amountInput.value || parseFloat(amountInput.value) <= 0) {
+            document.getElementById("errorAmount").style.display = "block";
+            amountInput.classList.add("error");
+            isValid = false;
+          }
+          if (!categorySelect.value) {
+            document.getElementById("errorCategory").style.display = "block";
+            categorySelect.classList.add("error");
+            isValid = false;
+          }
+          if (!dateInput.value) {
+            document.getElementById("errorDate").style.display = "block";
+            dateInput.classList.add("error");
+            isValid = false;
+          }
+
+          if (!isValid) return;
+
+          // Disable inputs & submit button to prevent double-submit
+          const submitBtn = document.getElementById("btnSubmitQuickExpense");
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Saving...";
+          const formInputs = [amountInput, titleInput, categorySelect, dateInput, methodSelect, notesInput];
+          formInputs.forEach(input => input.disabled = true);
+
+          try {
+            const res = await Auth.apiFetch("/api/v1/expenses/", {
+              method: "POST",
+              body: JSON.stringify({
+                title: titleInput.value.trim(),
+                amount: amountInput.value,
+                category: categorySelect.value,
+                expense_date: new Date(dateInput.value).toISOString(),
+                payment_method: methodSelect.value || "Cash",
+                notes: notesInput.value,
+                status: "completed",
+              }),
+            });
+
+            if (res && res.success) {
+              showToast("Expense added successfully!", "success");
+              closeModal("addExpenseModal");
+              e.target.reset();
+              await initDashboard();
+            } else {
+              showToast("Failed to add expense", "error");
+            }
+          } catch (err) {
+            showToast("An error occurred", "error");
+          } finally {
+            // Re-enable form controls
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Save Expense";
+            formInputs.forEach(input => input.disabled = false);
           }
         });
 
@@ -729,11 +865,7 @@
             // API expects ISO strings
             initDashboard(new Date(start).toISOString(), new Date(end).toISOString());
           } else {
-            if (typeof showToast !== "undefined") {
-              showToast("Please select both start and end dates", "error");
-            } else {
-              alert("Please select both start and end dates");
-            }
+            showToast("Please select both start and end dates", "error");
           }
         });
     </script>

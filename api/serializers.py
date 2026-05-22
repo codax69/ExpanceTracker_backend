@@ -37,7 +37,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
         model = Expense
         fields = [
             'id', 'title', 'amount', 'category', 'paymentMethod',
-            'description', 'notes', 'receiptImage', 'expenseDate',
+            'notes', 'receiptImage', 'expenseDate',
             'isRecurring', 'recurringType', 'tags',
             'createdAt', 'updatedAt',
         ]

@@ -3,7 +3,7 @@ Views for ExpenseIQ API — Expense endpoints.
 Mirrors: /api/v1/expenses/*
 """
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from django.db.models import Q
 
 from ..models import Expense
@@ -15,7 +15,39 @@ class ExpenseListCreateView(APIView):
     """GET /api/v1/expenses/ — list with filters & pagination
         POST /api/v1/expenses/ — create new expense"""
 
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
+
+    def _normalize_payload(self, data):
+        """Accept either snake_case or camelCase from clients by mapping
+        common expense fields to the serializer's camelCase names.
+        """
+        # Convert QueryDict-like objects to a plain dict with single values
+        payload = {}
+        try:
+            keys = list(data.keys())
+        except Exception:
+            # If data is a plain dict
+            payload = dict(data)
+            keys = list(payload.keys())
+
+        if not payload:
+            for k in keys:
+                payload[k] = data.get(k)
+
+        # mapping snake_case -> camelCase expected by serializer
+        mapping = {
+            'expense_date': 'expenseDate',
+            'payment_method': 'paymentMethod',
+            'is_recurring': 'isRecurring',
+            'recurring_type': 'recurringType',
+            'receipt_image': 'receiptImage',
+        }
+
+        for snake, camel in mapping.items():
+            if snake in payload and camel not in payload:
+                payload[camel] = payload.get(snake)
+
+        return payload
 
     def get(self, request):
         page = int(request.query_params.get('page', 1))
@@ -79,14 +111,15 @@ class ExpenseListCreateView(APIView):
         return ApiResponse.paginated(serializer.data, page, limit, total)
 
     def post(self, request):
-        serializer = ExpenseSerializer(data=request.data)
+        normalized = self._normalize_payload(request.data)
+        serializer = ExpenseSerializer(data=normalized)
         if serializer.is_valid():
             expense = serializer.save()
             return ApiResponse.created(
                 ExpenseSerializer(expense).data,
                 message='Expense created successfully'
             )
-        print("DEBUG request.data:", request.data)
+        print("DEBUG normalized payload:", normalized)
         print("DEBUG errors:", serializer.errors)
         return ApiResponse.error('Validation failed', 400, serializer.errors)
 

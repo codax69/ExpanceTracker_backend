@@ -37,6 +37,11 @@ function initSidebar() {
         "sidebarCollapsed",
         sidebar.classList.contains("collapsed"),
       );
+      // Trigger instant and delayed window resize to adjust layout and charts
+      window.dispatchEvent(new Event("resize"));
+      setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 260);
     });
   }
   if (menuBtn) {
@@ -289,3 +294,12 @@ document.addEventListener("DOMContentLoaded", () => {
     Auth.init();
   }
 });
+
+// Debounce helper
+function debounce(fn, wait) {
+  let t = null;
+  return function (...args) {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}

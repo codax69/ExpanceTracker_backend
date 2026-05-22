@@ -11,7 +11,7 @@ const Auth = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ username: identifier, password }),
+        body: JSON.stringify({ identifier, password }),
       });
       const data = await res.json();
       if (data.success) {

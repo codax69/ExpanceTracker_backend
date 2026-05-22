@@ -20,15 +20,29 @@ class BaseAPITestCase(APITestCase):
         self.client = APIClient()
         self.now = timezone.now()
 
+        # ── Authentication Setup ──
+        from django.contrib.auth.models import User
+        from django.conf import settings
+        from api.authentication import get_tokens_for_user
+
+        self.test_user = User.objects.create_user(
+            username='apitestuser',
+            email='apitestuser@example.com',
+            password='ApiTestPassword123'
+        )
+        tokens = get_tokens_for_user(self.test_user)
+        self.client.cookies[settings.JWT_COOKIE_NAMES['access']] = tokens['access']
+        self.client.cookies[settings.JWT_COOKIE_NAMES['refresh']] = tokens['refresh']
+
         # ── Categories ──
         self.cat_food = Category.objects.create(
-            name='Food', icon='🍔', color='#10b981', monthly_budget=Decimal('500.00')
+            name='Food', icon='ph-hamburger', color='#10b981', monthly_budget=Decimal('500.00')
         )
         self.cat_transport = Category.objects.create(
-            name='Transport', icon='🚗', color='#06b6d4', monthly_budget=Decimal('200.00')
+            name='Transport', icon='ph-car', color='#06b6d4', monthly_budget=Decimal('200.00')
         )
         self.cat_entertainment = Category.objects.create(
-            name='Entertainment', icon='🎬', color='#8b5cf6', monthly_budget=Decimal('150.00')
+            name='Entertainment', icon='ph-film-strip', color='#8b5cf6', monthly_budget=Decimal('150.00')
         )
 
         # ── Expenses ──
