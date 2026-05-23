@@ -24,18 +24,18 @@ class CategoryListCreateView(APIView):
        POST /api/v1/categories/ — create new category"""
 
     def get(self, request):
-        categories = Category.objects.all().order_by('name')
+        categories = Category.objects.filter(user=request.user).order_by('name')
         serializer = CategorySerializer(categories, many=True)
         return ApiResponse.success(serializer.data)
 
     def post(self, request):
         name = request.data.get('name', '').strip()
-        if Category.objects.filter(name__iexact=name).exists():
+        if Category.objects.filter(user=request.user, name__iexact=name).exists():
             return ApiResponse.error('Category already exists', 409)
 
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
-            cat = serializer.save()
+            cat = serializer.save(user=request.user)
             return ApiResponse.created(
                 CategorySerializer(cat).data,
                 message='Category created'
@@ -48,7 +48,7 @@ class CategoryDetailView(APIView):
 
     def put(self, request, pk):
         try:
-            cat = Category.objects.get(pk=pk)
+            cat = Category.objects.get(pk=pk, user=request.user)
         except Category.DoesNotExist:
             return ApiResponse.error('Category not found', 404)
 
@@ -63,7 +63,7 @@ class CategoryDetailView(APIView):
 
     def delete(self, request, pk):
         try:
-            cat = Category.objects.get(pk=pk)
+            cat = Category.objects.get(pk=pk, user=request.user)
         except Category.DoesNotExist:
             return ApiResponse.error('Category not found', 404)
         cat.delete()
@@ -86,7 +86,7 @@ class BudgetSetView(APIView):
             return ApiResponse.error('month, year, and totalMonthlyBudget are required', 400)
 
         budget, _ = Budget.objects.update_or_create(
-            month=int(month), year=int(year),
+            user=request.user, month=int(month), year=int(year),
             defaults={
                 'total_monthly_budget': total,
                 'warning_threshold': threshold,
@@ -109,7 +109,7 @@ class BudgetGetView(APIView):
             return ApiResponse.error('month and year query params are required', 400)
 
         try:
-            budget = Budget.objects.get(month=int(month), year=int(year))
+            budget = Budget.objects.get(user=request.user, month=int(month), year=int(year))
         except Budget.DoesNotExist:
             return ApiResponse.error('Budget not found', 404)
 
@@ -121,6 +121,7 @@ class BudgetGetView(APIView):
             end = datetime(int(year), int(month) + 1, 1, tzinfo=dt_timezone.utc)
 
         current_spent = Expense.objects.filter(
+            user=request.user,
             expense_date__gte=start, expense_date__lt=end
         ).aggregate(total=Sum('amount'))['total'] or 0
         current_spent = float(current_spent)
@@ -139,7 +140,7 @@ class BudgetGetAllView(APIView):
     """GET /api/v1/budget/all — list all budgets"""
 
     def get(self, request):
-        budgets = Budget.objects.all()
+        budgets = Budget.objects.filter(user=request.user)
         serializer = BudgetSerializer(budgets, many=True)
         return ApiResponse.success(serializer.data)
 
@@ -150,7 +151,7 @@ class BudgetWarningsView(APIView):
     def get(self, request):
         now = timezone.now()
         try:
-            budget = Budget.objects.get(month=now.month, year=now.year)
+            budget = Budget.objects.get(user=request.user, month=now.month, year=now.year)
         except Budget.DoesNotExist:
             return ApiResponse.success({'warning': False, 'message': 'No budget set for current month'})
 
@@ -158,6 +159,7 @@ class BudgetWarningsView(APIView):
         end = get_end_of_month(now)
         spent = float(
             Expense.objects.filter(
+                user=request.user,
                 expense_date__gte=start, expense_date__lte=end
             ).aggregate(total=Sum('amount'))['total'] or 0
         )
@@ -191,12 +193,13 @@ class ReportCSVView(APIView):
         end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
 
         expenses = Expense.objects.filter(
+            user=request.user,
             expense_date__gte=start, expense_date__lte=end
         ).order_by('-expense_date')
 
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['Title', 'Amount', 'Category', 'Payment Method', 'Date', 'Description', 'Notes'])
+        writer.writerow(['Title', 'Amount', 'Category', 'Payment Method', 'Date', 'Notes'])
 
         for e in expenses:
             writer.writerow([
@@ -205,7 +208,6 @@ class ReportCSVView(APIView):
                 e.category,
                 e.payment_method,
                 e.expense_date.strftime('%Y-%m-%d'),
-                e.description,
                 e.notes,
             ])
 
@@ -213,10 +215,12 @@ class ReportCSVView(APIView):
         total_expense = float(expenses.aggregate(total=Sum('amount'))['total'] or 0)
         total_income = float(
             Income.objects.filter(
+                user=request.user,
                 income_date__gte=start, income_date__lte=end
             ).aggregate(total=Sum('amount'))['total'] or 0
         )
         Report.objects.create(
+            user=request.user,
             type='custom',
             start_date=start,
             end_date=end,
@@ -245,6 +249,7 @@ class ReportPDFView(APIView):
         end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
 
         expenses = Expense.objects.filter(
+            user=request.user,
             expense_date__gte=start, expense_date__lte=end
         ).order_by('-expense_date')
 
@@ -252,6 +257,7 @@ class ReportPDFView(APIView):
         expense_count = expenses.count()
         total_income = float(
             Income.objects.filter(
+                user=request.user,
                 income_date__gte=start, income_date__lte=end
             ).aggregate(total=Sum('amount'))['total'] or 0
         )
@@ -333,6 +339,7 @@ class ReportPDFView(APIView):
 
         # Save report record
         Report.objects.create(
+            user=request.user,
             type='custom',
             start_date=start,
             end_date=end,
@@ -355,7 +362,7 @@ class ReportHistoryView(APIView):
         page = int(request.query_params.get('page', 1))
         limit = int(request.query_params.get('limit', 10))
 
-        queryset = Report.objects.all().order_by('-created_at')
+        queryset = Report.objects.filter(user=request.user).order_by('-created_at')
         total = queryset.count()
         offset = (page - 1) * limit
         reports = queryset[offset:offset + limit]

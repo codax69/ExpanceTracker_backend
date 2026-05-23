@@ -1,26 +1,16 @@
-{% load static %}
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="ExpenseIQ - Premium Financial Dashboard for tracking expenses, income, and budgets"
-    />
-    <title>ExpenseIQ — Dashboard</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- ApexCharts CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  </head>
+{% extends 'base.html' %}
 
-  <body>
-    <div id="layoutSidebar"></div>
-    <div class="main-content" id="mainContent">
-      <div id="layoutTopbar"></div>
-      <div class="page fade-in" id="dashboardPage">
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back — here's your financial overview{% endblock %}
+
+{% block extra_head %}
+<!-- ApexCharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page fade-in" id="dashboardPage">
         <!-- Dashboard Filter -->
         <div
           class="dashboard-filter-bar fade-in"
@@ -324,26 +314,11 @@
             </div>
           </form>
         </div>
-      </div>
-    </div>
+</div>
+{% endblock %}
 
-    <div id="layoutBottomNav"></div>
-
-    <script src="{% static 'js/auth.js' %}?v=4.1"></script>
-    <script src="{% static 'js/components.js' %}?v=4.1"></script>
-    <script src="{% static 'js/app.js' %}?v=4.1"></script>
+{% block extra_js %}
     <script>
-      // Inject layout
-      document.getElementById("layoutSidebar").innerHTML =
-        renderSidebar("dashboard");
-      document.getElementById("layoutTopbar").innerHTML = renderTopbar(
-        "Dashboard",
-        "Welcome back — here's your financial overview",
-      );
-      document.getElementById("layoutBottomNav").innerHTML =
-        renderBottomNav("dashboard");
-      injectLayout("dashboard");
-
       let dashboardCategories = [];
 
       // Dashboard initialization
@@ -869,5 +844,4 @@
           }
         });
     </script>
-  </body>
-</html>
+{% endblock %}

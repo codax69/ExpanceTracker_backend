@@ -18,10 +18,10 @@ from ..utils import (
 )
 
 
-def _sum_expenses(start, end):
+def _sum_expenses(user, start, end):
     """Sum expenses in a date range."""
     result = Expense.objects.filter(
-        expense_date__gte=start, expense_date__lte=end
+        user=user, expense_date__gte=start, expense_date__lte=end
     ).aggregate(total=Sum('amount'), count=Count('id'))
     return {
         'total': float(result['total'] or 0),
@@ -29,10 +29,10 @@ def _sum_expenses(start, end):
     }
 
 
-def _sum_income(start, end):
+def _sum_income(user, start, end):
     """Sum income in a date range."""
     result = Income.objects.filter(
-        income_date__gte=start, income_date__lte=end
+        user=user, income_date__gte=start, income_date__lte=end
     ).aggregate(total=Sum('amount'), count=Count('id'))
     return {
         'total': float(result['total'] or 0),
@@ -40,11 +40,11 @@ def _sum_income(start, end):
     }
 
 
-def _group_expenses_by_category(start, end):
+def _group_expenses_by_category(user, start, end):
     """Group expenses by category for a date range."""
     data = (
         Expense.objects
-        .filter(expense_date__gte=start, expense_date__lte=end)
+        .filter(user=user, expense_date__gte=start, expense_date__lte=end)
         .values('category')
         .annotate(
             total=Sum('amount'),
@@ -64,7 +64,7 @@ def _group_expenses_by_category(start, end):
     ]
 
 
-def _monthly_expense_trend(months=6):
+def _monthly_expense_trend(user, months=6):
     """Get monthly expense aggregation for the last N months."""
     start_date = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     start_date = start_date - timedelta(days=months * 31)
@@ -72,7 +72,7 @@ def _monthly_expense_trend(months=6):
 
     data = (
         Expense.objects
-        .filter(expense_date__gte=start_date)
+        .filter(user=user, expense_date__gte=start_date)
         .annotate(
             month=ExtractMonth('expense_date'),
             year=ExtractYear('expense_date'),
@@ -91,7 +91,7 @@ def _monthly_expense_trend(months=6):
     ]
 
 
-def _monthly_income_trend(months=6):
+def _monthly_income_trend(user, months=6):
     """Get monthly income aggregation for the last N months."""
     start_date = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     start_date = start_date - timedelta(days=months * 31)
@@ -99,7 +99,7 @@ def _monthly_income_trend(months=6):
 
     data = (
         Income.objects
-        .filter(income_date__gte=start_date)
+        .filter(user=user, income_date__gte=start_date)
         .annotate(
             month=ExtractMonth('income_date'),
             year=ExtractYear('income_date'),
@@ -118,11 +118,11 @@ def _monthly_income_trend(months=6):
     ]
 
 
-def _daily_trend_for_week(start, end):
+def _daily_trend_for_week(user, start, end):
     """Get daily expense totals for a week. Uses ExtractWeekDay (1=Sunday...7=Saturday in Django)."""
     data = (
         Expense.objects
-        .filter(expense_date__gte=start, expense_date__lte=end)
+        .filter(user=user, expense_date__gte=start, expense_date__lte=end)
         .annotate(dow=ExtractWeekDay('expense_date'))
         .values('dow')
         .annotate(total=Sum('amount'), count=Count('id'))
@@ -168,16 +168,16 @@ class AnalyticsKPIsView(APIView):
         week_end = get_end_of_week(now)
         all_time_start = datetime(2000, 1, 1, tzinfo=dt_timezone.utc)
 
-        total_exp = _sum_expenses(all_time_start, now)
-        total_inc = _sum_income(all_time_start, now)
-        monthly_exp = _sum_expenses(month_start, month_end)
-        weekly_exp = _sum_expenses(week_start, week_end)
-        category_data = _group_expenses_by_category(month_start, month_end)
+        total_exp = _sum_expenses(request.user, all_time_start, now)
+        total_inc = _sum_income(request.user, all_time_start, now)
+        monthly_exp = _sum_expenses(request.user, month_start, month_end)
+        weekly_exp = _sum_expenses(request.user, week_start, week_end)
+        category_data = _group_expenses_by_category(request.user, month_start, month_end)
 
         # Top expense this month
         top_expense = (
             Expense.objects
-            .filter(expense_date__gte=month_start, expense_date__lte=month_end)
+            .filter(user=request.user, expense_date__gte=month_start, expense_date__lte=month_end)
             .order_by('-amount')
             .first()
         )
@@ -213,9 +213,9 @@ class AnalyticsWeeklyView(APIView):
         this_week_end = get_end_of_week(now)
         prev_start, prev_end = get_previous_week_range()
 
-        current = _sum_expenses(this_week_start, this_week_end)
-        previous = _sum_expenses(prev_start, prev_end)
-        daily_trend = _daily_trend_for_week(this_week_start, this_week_end)
+        current = _sum_expenses(request.user, this_week_start, this_week_end)
+        previous = _sum_expenses(request.user, prev_start, prev_end)
+        daily_trend = _daily_trend_for_week(request.user, this_week_start, this_week_end)
 
         return ApiResponse.success({
             'currentWeek': current['total'],
@@ -235,9 +235,9 @@ class AnalyticsMonthlyView(APIView):
         this_month_end = get_end_of_month(now)
         prev_start, prev_end = get_previous_month_range()
 
-        current = _sum_expenses(this_month_start, this_month_end)
-        previous = _sum_expenses(prev_start, prev_end)
-        trend = _monthly_expense_trend(6)
+        current = _sum_expenses(request.user, this_month_start, this_month_end)
+        previous = _sum_expenses(request.user, prev_start, prev_end)
+        trend = _monthly_expense_trend(request.user, 6)
 
         return ApiResponse.success({
             'currentMonth': current['total'],
@@ -252,7 +252,7 @@ class AnalyticsMonthlyBarChartView(APIView):
     """GET /api/v1/analytics/charts/monthly-bar"""
 
     def get(self, request):
-        trend = _monthly_expense_trend(6)
+        trend = _monthly_expense_trend(request.user, 6)
         labels = get_last_n_months_labels(6)
 
         data = []
@@ -278,8 +278,8 @@ class AnalyticsWeeklyLineChartView(APIView):
     def get(self, request):
         now = timezone.now()
         prev_start, prev_end = get_previous_week_range()
-        this_week = _daily_trend_for_week(get_start_of_week(now), get_end_of_week(now))
-        last_week = _daily_trend_for_week(prev_start, prev_end)
+        this_week = _daily_trend_for_week(request.user, get_start_of_week(now), get_end_of_week(now))
+        last_week = _daily_trend_for_week(request.user, prev_start, prev_end)
 
         # Django ExtractWeekDay: 1=Sunday, 2=Monday, ..., 7=Saturday
         days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -316,7 +316,7 @@ class AnalyticsCategoryPieChartView(APIView):
             start = get_start_of_month(now)
             end = get_end_of_month(now)
             
-        data = _group_expenses_by_category(start, end)
+        data = _group_expenses_by_category(request.user, start, end)
         return ApiResponse.success(data)
 
 
@@ -324,8 +324,8 @@ class AnalyticsIncomeExpenseChartView(APIView):
     """GET /api/v1/analytics/charts/income-expense"""
 
     def get(self, request):
-        exp_trend = _monthly_expense_trend(6)
-        inc_trend = _monthly_income_trend(6)
+        exp_trend = _monthly_expense_trend(request.user, 6)
+        inc_trend = _monthly_income_trend(request.user, 6)
         labels = get_last_n_months_labels(6)
 
         data = []
@@ -362,10 +362,10 @@ class AnalyticsCategoryView(APIView):
             month_start = get_start_of_month(now)
             month_end = get_end_of_month(now)
             
-        data = _group_expenses_by_category(month_start, month_end)
+        data = _group_expenses_by_category(request.user, month_start, month_end)
 
         # Enrich with category budget info
-        categories = {c.name: c for c in Category.objects.all()}
+        categories = {c.name: c for c in Category.objects.filter(user=request.user)}
 
         enriched = []
         for d in data:

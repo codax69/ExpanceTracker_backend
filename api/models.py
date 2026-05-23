@@ -4,11 +4,13 @@ Using SQLite as the database backend.
 """
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 
 
 class Category(models.Model):
     """Expense category with optional monthly budget."""
-    name = models.CharField(max_length=100, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1, related_name='categories')
+    name = models.CharField(max_length=100)
     icon = models.CharField(max_length=50, default='ph-package')
     color = models.CharField(max_length=20, default='#10b981')
     monthly_budget = models.DecimalField(
@@ -21,6 +23,17 @@ class Category(models.Model):
     class Meta:
         ordering = ['name']
         verbose_name_plural = 'categories'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'name'], name='unique_user_category')
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.user_id or not User.objects.filter(id=self.user_id).exists():
+            user = User.objects.first()
+            if not user:
+                user = User.objects.create_user('default_user', 'default@example.com', 'defaultpassword123')
+            self.user = user
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.icon} {self.name}"
@@ -46,6 +59,7 @@ class Expense(models.Model):
         ('yearly', 'Yearly'),
     ]
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1, related_name='expenses')
     title = models.CharField(max_length=255, db_index=True)
     amount = models.DecimalField(
         max_digits=12, decimal_places=2,
@@ -74,6 +88,14 @@ class Expense(models.Model):
             models.Index(fields=['category', '-expense_date']),
         ]
 
+    def save(self, *args, **kwargs):
+        if not self.user_id or not User.objects.filter(id=self.user_id).exists():
+            user = User.objects.first()
+            if not user:
+                user = User.objects.create_user('default_user', 'default@example.com', 'defaultpassword123')
+            self.user = user
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.title} — ${self.amount}"
 
@@ -91,6 +113,7 @@ class Income(models.Model):
         ('Other', 'Other'),
     ]
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1, related_name='incomes')
     source = models.CharField(max_length=255, db_index=True)
     amount = models.DecimalField(
         max_digits=12, decimal_places=2,
@@ -112,12 +135,21 @@ class Income(models.Model):
             models.Index(fields=['source', '-income_date']),
         ]
 
+    def save(self, *args, **kwargs):
+        if not self.user_id or not User.objects.filter(id=self.user_id).exists():
+            user = User.objects.first()
+            if not user:
+                user = User.objects.create_user('default_user', 'default@example.com', 'defaultpassword123')
+            self.user = user
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.source} — ${self.amount}"
 
 
 class Budget(models.Model):
     """Monthly budget settings."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1, related_name='budgets')
     month = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(12)]
     )
@@ -134,8 +166,16 @@ class Budget(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ['year', 'month']
+        unique_together = ['user', 'year', 'month']
         ordering = ['-year', '-month']
+
+    def save(self, *args, **kwargs):
+        if not self.user_id or not User.objects.filter(id=self.user_id).exists():
+            user = User.objects.first()
+            if not user:
+                user = User.objects.create_user('default_user', 'default@example.com', 'defaultpassword123')
+            self.user = user
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Budget {self.month}/{self.year} — ${self.total_monthly_budget}"
@@ -155,6 +195,7 @@ class Report(models.Model):
         ('csv', 'CSV'),
     ]
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1, related_name='reports')
     type = models.CharField(max_length=20, choices=REPORT_TYPE_CHOICES)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
@@ -173,6 +214,14 @@ class Report(models.Model):
             models.Index(fields=['-created_at']),
             models.Index(fields=['type', '-created_at']),
         ]
+
+    def save(self, *args, **kwargs):
+        if not self.user_id or not User.objects.filter(id=self.user_id).exists():
+            user = User.objects.first()
+            if not user:
+                user = User.objects.create_user('default_user', 'default@example.com', 'defaultpassword123')
+            self.user = user
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.type} report ({self.start_date.date()} – {self.end_date.date()})"

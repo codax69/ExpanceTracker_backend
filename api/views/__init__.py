@@ -74,7 +74,7 @@ class ExpenseListCreateView(APIView):
         if sort_field not in ['expense_date', 'amount', 'category', 'title']:
             sort_field = 'expense_date'
 
-        queryset = Expense.objects.all()
+        queryset = Expense.objects.filter(user=request.user)
 
         # Apply filters
         if category:
@@ -94,7 +94,6 @@ class ExpenseListCreateView(APIView):
         if search:
             queryset = queryset.filter(
                 Q(title__icontains=search) |
-                Q(description__icontains=search) |
                 Q(notes__icontains=search)
             )
 
@@ -114,7 +113,7 @@ class ExpenseListCreateView(APIView):
         normalized = self._normalize_payload(request.data)
         serializer = ExpenseSerializer(data=normalized)
         if serializer.is_valid():
-            expense = serializer.save()
+            expense = serializer.save(user=request.user)
             return ApiResponse.created(
                 ExpenseSerializer(expense).data,
                 message='Expense created successfully'
@@ -129,7 +128,7 @@ class ExpenseDetailView(APIView):
 
     def _get_expense(self, pk):
         try:
-            return Expense.objects.get(pk=pk)
+            return Expense.objects.get(pk=pk, user=self.request.user)
         except Expense.DoesNotExist:
             return None
 
@@ -168,9 +167,8 @@ class ExpenseSearchView(APIView):
         if not query:
             return ApiResponse.success([])
 
-        expenses = Expense.objects.filter(
+        expenses = Expense.objects.filter(user=request.user).filter(
             Q(title__icontains=query) |
-            Q(description__icontains=query) |
             Q(notes__icontains=query)
         ).order_by('-expense_date')[:20]
 
@@ -182,7 +180,7 @@ class ExpenseRecurringView(APIView):
     """GET /api/v1/expenses/recurring"""
 
     def get(self, request):
-        expenses = Expense.objects.filter(is_recurring=True).order_by('-expense_date')
+        expenses = Expense.objects.filter(user=request.user, is_recurring=True).order_by('-expense_date')
         serializer = ExpenseSerializer(expenses, many=True)
         return ApiResponse.success(serializer.data)
 
@@ -193,7 +191,7 @@ class ExpenseReceiptUploadView(APIView):
 
     def post(self, request, pk):
         try:
-            expense = Expense.objects.get(pk=pk)
+            expense = Expense.objects.get(pk=pk, user=request.user)
         except Expense.DoesNotExist:
             return ApiResponse.error('Expense not found', 404)
 

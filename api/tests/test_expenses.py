@@ -127,7 +127,6 @@ class ExpenseCreateTests(BaseAPITestCase):
             'category': 'Food',
             'paymentMethod': 'Cash',
             'expenseDate': self.now.isoformat(),
-            'description': 'Morning coffee',
         }
         response = self.client.post('/api/v1/expenses/', payload, format='json')
         data = self.assert_success_response(response, 201)
@@ -246,11 +245,7 @@ class ExpenseSearchTests(BaseAPITestCase):
         self.assertEqual(len(data['data']), 1)
         self.assertEqual(data['data'][0]['title'], 'Netflix Subscription')
 
-    def test_search_by_description(self):
-        """Should find expenses matching description."""
-        response = self.client.get('/api/v1/expenses/search', {'q': 'groceries'})
-        data = self.assert_success_response(response)
-        self.assertGreaterEqual(len(data['data']), 1)
+
 
     def test_search_by_notes(self):
         """Should find expenses matching notes."""

@@ -36,7 +36,7 @@ class IncomeListCreateView(APIView):
         if sort_field not in ['income_date', 'amount', 'source']:
             sort_field = 'income_date'
 
-        queryset = Income.objects.all()
+        queryset = Income.objects.filter(user=request.user)
 
         if source:
             queryset = queryset.filter(source=source)
@@ -58,7 +58,7 @@ class IncomeListCreateView(APIView):
     def post(self, request):
         serializer = IncomeSerializer(data=request.data)
         if serializer.is_valid():
-            income = serializer.save()
+            income = serializer.save(user=request.user)
             return ApiResponse.created(
                 IncomeSerializer(income).data,
                 message='Income added successfully'
@@ -71,7 +71,7 @@ class IncomeDetailView(APIView):
 
     def _get_income(self, pk):
         try:
-            return Income.objects.get(pk=pk)
+            return Income.objects.get(pk=pk, user=self.request.user)
         except Income.DoesNotExist:
             return None
 
@@ -111,7 +111,7 @@ class IncomeMonthlySummaryView(APIView):
 
         data = (
             Income.objects
-            .filter(income_date__gte=start_date)
+            .filter(user=request.user, income_date__gte=start_date)
             .annotate(
                 month=ExtractMonth('income_date'),
                 year=ExtractYear('income_date'),

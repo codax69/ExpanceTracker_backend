@@ -13,7 +13,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ExpenseAdmin(admin.ModelAdmin):
     list_display = ['title', 'amount', 'category', 'payment_method', 'expense_date', 'is_recurring']
     list_filter = ['category', 'payment_method', 'is_recurring']
-    search_fields = ['title', 'description', 'notes']
+    search_fields = ['title', 'notes']
     date_hierarchy = 'expense_date'
 
 

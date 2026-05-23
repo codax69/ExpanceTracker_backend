@@ -1,16 +1,10 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ExpenseIQ - Premium Expense Tracker">
-  <title>ExpenseIQ — Expenses</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <!-- Phosphor Icons -->
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+{% block title %}Expenses{% endblock %}
+{% block page_title %}Expenses{% endblock %}
+{% block page_subtitle %}Track and manage all your spending{% endblock %}
 
+{% block extra_head %}
   <style>
     /* Premium Page Specific Styles */
     :root {
@@ -194,13 +188,10 @@
       margin-top: 4px;
     }
   </style>
-</head>
+{% endblock %}
 
-<body>
-  <div id="layoutSidebar"></div>
-  <div class="main-content" id="mainContent">
-    <div id="layoutTopbar"></div>
-    <div class="page fade-in">
+{% block content %}
+<div class="page fade-in">
 
       <!-- TOP KPI SECTION -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -501,22 +492,11 @@
       </div>
     </div>
 
-  </div>
+</div>
+{% endblock %}
 
-  <div id="layoutBottomNav"></div>
-
-  <!-- Scripts -->
-  <script src="{% static 'js/auth.js' %}"></script>
-  <script src="{% static 'js/components.js' %}?v=3.0"></script>
-  <script src="{% static 'js/app.js' %}?v=3.0"></script>
-
+{% block extra_js %}
   <script>
-    // Initialize Layout
-    document.getElementById('layoutSidebar').innerHTML = renderSidebar('expenses');
-    document.getElementById('layoutTopbar').innerHTML = renderTopbar('Expenses', 'Track and manage all your spending');
-    document.getElementById('layoutBottomNav').innerHTML = renderBottomNav('expenses');
-    injectLayout();
-
     // App State
     let expenses = [];
     let categories = [];
@@ -1328,6 +1308,4 @@
     initExpensePage();
 
   </script>
-</body>
-
-</html>
+{% endblock %}

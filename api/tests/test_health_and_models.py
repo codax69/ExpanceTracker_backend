@@ -86,7 +86,6 @@ class ExpenseModelTests(TestCase):
             category='Food', expense_date=timezone.now(),
         )
         self.assertEqual(exp.payment_method, 'Cash')
-        self.assertEqual(exp.description, '')
         self.assertEqual(exp.notes, '')
         self.assertFalse(exp.is_recurring)
         self.assertIsNone(exp.recurring_type)
