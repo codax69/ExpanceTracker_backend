@@ -20,6 +20,9 @@ class BudgetSetTests(BaseAPITestCase):
             'month': 1,
             'year': 2027,
             'totalMonthlyBudget': '3000.00',
+            'dailyBudget': '150.00',
+            'weeklyBudget': '950.00',
+            'yearlyBudget': '35000.00',
             'warningThreshold': 75,
         }
         response = self.client.post('/api/v1/budget', payload, format='json')
@@ -28,21 +31,43 @@ class BudgetSetTests(BaseAPITestCase):
         self.assertEqual(data['data']['month'], 1)
         self.assertEqual(data['data']['year'], 2027)
         self.assertEqual(data['data']['totalMonthlyBudget'], 3000.00)
+        self.assertEqual(data['data']['dailyBudget'], 150.00)
+        self.assertEqual(data['data']['weeklyBudget'], 950.00)
+        self.assertEqual(data['data']['yearlyBudget'], 35000.00)
         self.assertEqual(data['data']['warningThreshold'], 75)
 
     def test_set_budget_updates_existing(self):
-        """Should update existing budget via upsert."""
+        """Should update existing budget via upsert and preserve other budgets if not sent."""
         now = self.now
+        # First set all budgets
         payload = {
             'month': now.month,
             'year': now.year,
             'totalMonthlyBudget': '3500.00',
+            'dailyBudget': '120.00',
+            'weeklyBudget': '800.00',
+            'yearlyBudget': '40000.00',
             'warningThreshold': 90,
         }
         response = self.client.post('/api/v1/budget', payload, format='json')
         data = self.assert_success_response(response)
-        self.assertEqual(data['data']['totalMonthlyBudget'], 3500.00)
+        
+        # Now partially update only monthly budget
+        partial_payload = {
+            'month': now.month,
+            'year': now.year,
+            'totalMonthlyBudget': '3800.00',
+        }
+        response = self.client.post('/api/v1/budget', partial_payload, format='json')
+        data = self.assert_success_response(response)
+        
+        self.assertEqual(data['data']['totalMonthlyBudget'], 3800.00)
+        # Should preserve daily, weekly, and yearly budgets from previous set
+        self.assertEqual(data['data']['dailyBudget'], 120.00)
+        self.assertEqual(data['data']['weeklyBudget'], 800.00)
+        self.assertEqual(data['data']['yearlyBudget'], 40000.00)
         self.assertEqual(data['data']['warningThreshold'], 90)
+        
         # Should not create a new budget
         self.assertEqual(
             Budget.objects.filter(month=now.month, year=now.year).count(), 1

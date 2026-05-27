@@ -76,17 +76,33 @@ class BudgetSerializer(serializers.ModelSerializer):
     totalMonthlyBudget = serializers.DecimalField(
         source='total_monthly_budget', max_digits=12, decimal_places=2
     )
+    dailyBudget = serializers.DecimalField(
+        source='daily_budget', max_digits=12, decimal_places=2, required=False, default=0
+    )
+    weeklyBudget = serializers.DecimalField(
+        source='weekly_budget', max_digits=12, decimal_places=2, required=False, default=0
+    )
+    yearlyBudget = serializers.DecimalField(
+        source='yearly_budget', max_digits=12, decimal_places=2, required=False, default=0
+    )
     warningThreshold = serializers.IntegerField(source='warning_threshold', required=False)
     createdAt = serializers.DateTimeField(source='created_at', read_only=True)
     updatedAt = serializers.DateTimeField(source='updated_at', read_only=True)
 
     class Meta:
         model = Budget
-        fields = ['id', 'month', 'year', 'totalMonthlyBudget', 'warningThreshold', 'createdAt', 'updatedAt']
+        fields = [
+            'id', 'month', 'year', 'dailyBudget', 'weeklyBudget', 
+            'totalMonthlyBudget', 'yearlyBudget', 'warningThreshold', 
+            'createdAt', 'updatedAt'
+        ]
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         ret['totalMonthlyBudget'] = float(ret.get('totalMonthlyBudget', 0) or 0)
+        ret['dailyBudget'] = float(ret.get('dailyBudget', 0) or 0)
+        ret['weeklyBudget'] = float(ret.get('weeklyBudget', 0) or 0)
+        ret['yearlyBudget'] = float(ret.get('yearlyBudget', 0) or 0)
         ret['_id'] = str(ret['id'])
         return ret
 

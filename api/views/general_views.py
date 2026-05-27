@@ -14,6 +14,8 @@ from django.utils import timezone
 from ..models import Category, Budget, Expense, Income, Report
 from ..serializers import CategorySerializer, BudgetSerializer, ReportSerializer
 from ..utils import ApiResponse, get_start_of_month, get_end_of_month
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
 
 # ═══════════════════════════════════════════
@@ -79,17 +81,40 @@ class BudgetSetView(APIView):
     def post(self, request):
         month = request.data.get('month')
         year = request.data.get('year')
-        total = request.data.get('totalMonthlyBudget')
-        threshold = request.data.get('warningThreshold', 80)
 
-        if not all([month, year, total]):
-            return ApiResponse.error('month, year, and totalMonthlyBudget are required', 400)
+        if not month or not year:
+            return ApiResponse.error('month and year are required', 400)
+
+        existing = Budget.objects.filter(user=request.user, month=int(month), year=int(year)).first()
+
+        total = request.data.get('totalMonthlyBudget')
+        if total is None:
+            total = existing.total_monthly_budget if existing else 0
+
+        threshold = request.data.get('warningThreshold')
+        if threshold is None:
+            threshold = existing.warning_threshold if existing else 80
+
+        daily = request.data.get('dailyBudget')
+        if daily is None:
+            daily = existing.daily_budget if existing else 0
+
+        weekly = request.data.get('weeklyBudget')
+        if weekly is None:
+            weekly = existing.weekly_budget if existing else 0
+
+        yearly = request.data.get('yearlyBudget')
+        if yearly is None:
+            yearly = existing.yearly_budget if existing else 0
 
         budget, _ = Budget.objects.update_or_create(
             user=request.user, month=int(month), year=int(year),
             defaults={
                 'total_monthly_budget': total,
                 'warning_threshold': threshold,
+                'daily_budget': daily,
+                'weekly_budget': weekly,
+                'yearly_budget': yearly,
             }
         )
         return ApiResponse.success(
@@ -369,3 +394,48 @@ class ReportHistoryView(APIView):
 
         serializer = ReportSerializer(reports, many=True)
         return ApiResponse.paginated(serializer.data, page, limit, total)
+
+
+@login_required
+def index_view(request):
+    """Renders the dashboard index page with server-side context fallback."""
+    now = timezone.now()
+    
+    # Query categories
+    categories = Category.objects.filter(user=request.user).order_by('name')
+    categories_map = {c.name: c.icon for c in categories}
+    
+    # Query recent expenses
+    recent_expenses = Expense.objects.filter(user=request.user).order_by('-expense_date')[:7]
+    for e in recent_expenses:
+        e.category_icon = categories_map.get(e.category, 'ph-package')
+        
+    # Query budget warnings/info for current month
+    budget_info = None
+    budget = Budget.objects.filter(user=request.user, month=now.month, year=now.year).first()
+    if budget:
+        start = get_start_of_month(now)
+        end = get_end_of_month(now)
+        spent = float(
+            Expense.objects.filter(
+                user=request.user,
+                expense_date__gte=start, expense_date__lte=end
+            ).aggregate(total=Sum('amount'))['total'] or 0
+        )
+        budget_total = float(budget.total_monthly_budget)
+        usage = (spent / budget_total * 100) if budget_total > 0 else 0
+        budget_info = {
+            'budget': budget_total,
+            'spent': spent,
+            'remaining': budget_total - spent,
+            'usage': round(usage, 2),
+            'threshold': budget.warning_threshold,
+            'warning': usage >= budget.warning_threshold,
+        }
+        
+    context = {
+        'categories': categories,
+        'recent_expenses': recent_expenses,
+        'budget_info': budget_info,
+    }
+    return render(request, 'index.html', context)

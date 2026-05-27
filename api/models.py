@@ -158,6 +158,18 @@ class Budget(models.Model):
         max_digits=12, decimal_places=2,
         validators=[MinValueValidator(0)]
     )
+    daily_budget = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        validators=[MinValueValidator(0)]
+    )
+    weekly_budget = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        validators=[MinValueValidator(0)]
+    )
+    yearly_budget = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        validators=[MinValueValidator(0)]
+    )
     warning_threshold = models.IntegerField(
         default=80,
         validators=[MinValueValidator(0), MaxValueValidator(100)]
