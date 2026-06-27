@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files in production
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -70,18 +71,30 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ── Database (SQLite by default, MySQL optional) ──
-# Local development uses SQLite unless USE_MYSQL=True is set in .env.
+# Docker / production uses MySQL. Local dev falls back to SQLite.
 USE_MYSQL = os.getenv('USE_MYSQL', 'False').lower() in ('true', '1', 'yes')
 
 if USE_MYSQL:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('MYSQL_DATABASE'),
-            'USER': os.getenv('MYSQL_USER'),
-            'PASSWORD': os.getenv('MYSQL_PASSWORD'),
-            'HOST': os.getenv('MYSQL_HOST'),
-            'PORT': os.getenv('MYSQL_PORT'),
+            'NAME': os.getenv('MYSQL_DATABASE', 'expensetracker'),
+            'USER': os.getenv('MYSQL_USER', 'expenseuser'),
+            'PASSWORD': os.getenv('MYSQL_PASSWORD', 'expensepass'),
+            'HOST': os.getenv('MYSQL_HOST', 'db'),
+            'PORT': os.getenv('MYSQL_PORT', '3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+            'CONN_MAX_AGE': 60,
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
@@ -102,10 +115,13 @@ USE_I18N = True
 USE_TZ = True
 
 # ── Static files ──
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'          # collectstatic output dir
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+# WhiteNoise: compress & cache static files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ── Default auto field ──
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -196,12 +212,16 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 CSRF_COOKIE_HTTPONLY = False   # Allow JavaScript to read the CSRF cookie for API requests
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Disable SSL redirect when running behind Nginx/reverse proxy in Docker
+    # (the proxy handles HTTPS termination; enabling this causes redirect loops)
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes')
     SECURE_HSTS_SECONDS = 31536000      # 1 year HSTS
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # Trust the X-Forwarded-Proto header from Nginx
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # ── File Uploads ──
 MEDIA_URL = '/media/'

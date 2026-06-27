@@ -17,6 +17,7 @@ from .views import (
     ExpenseRecurringView,
     ExpenseReceiptUploadView,
 )
+from .views.ai_views import AIAssistantView
 from .views.income_views import (
     IncomeListCreateView,
     IncomeDetailView,
@@ -81,4 +82,5 @@ urlpatterns = [
     path('analytics/charts/category-pie', AnalyticsCategoryPieChartView.as_view(), name='analytics-category-pie'),
     path('analytics/charts/income-expense', AnalyticsIncomeExpenseChartView.as_view(), name='analytics-income-expense'),
     path('analytics/categories', AnalyticsCategoryView.as_view(), name='analytics-categories'),
+    path('ai/assistant', AIAssistantView.as_view(), name='ai-assistant'),
 ]

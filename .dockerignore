@@ -1,0 +1,40 @@
+# .dockerignore — files excluded from the Docker build context
+
+# Git
+.git/
+.gitignore
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Local environment files (secrets must NOT go into the image)
+.env
+.env.docker
+
+# SQLite dev database
+db.sqlite3
+
+# Static/media (generated at runtime)
+staticfiles/
+media/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docs / schema output
+schema.yml
+README.md
+
+# Docker files themselves (not needed inside container)
+docker-compose*.yml
+Dockerfile

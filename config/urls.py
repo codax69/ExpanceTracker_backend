@@ -34,6 +34,7 @@ urlpatterns = [
     path('', index_view, name='home'),
     path('expenses/', login_required(TemplateView.as_view(template_name='expenses.html')), name='expenses'),
     path('budget/', login_required(TemplateView.as_view(template_name='budget.html')), name='budget'),
+    path('ai-assistant/', login_required(TemplateView.as_view(template_name='ai_assistant.html')), name='ai-assistant'),
 
 
     path('settings/', login_required(TemplateView.as_view(template_name='settings.html')), name='settings'),
