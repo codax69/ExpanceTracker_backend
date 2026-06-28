@@ -11,8 +11,8 @@ from django.http import HttpResponse
 from django.db.models import Sum, Count
 from django.utils import timezone
 
-from ..models import Category, Budget, Expense, Income, Report
-from ..serializers import CategorySerializer, BudgetSerializer, ReportSerializer
+from ..models import Category, Budget, Expense, Income, Report, UserSettings
+from ..serializers import CategorySerializer, BudgetSerializer, ReportSerializer, UserSettingsSerializer
 from ..utils import ApiResponse, get_start_of_month, get_end_of_month
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -394,6 +394,23 @@ class ReportHistoryView(APIView):
 
         serializer = ReportSerializer(reports, many=True)
         return ApiResponse.paginated(serializer.data, page, limit, total)
+
+
+class UserSettingsView(APIView):
+    """GET/PUT /api/v1/settings"""
+
+    def get(self, request):
+        settings, created = UserSettings.objects.get_or_create(user=request.user)
+        serializer = UserSettingsSerializer(settings)
+        return ApiResponse.success(serializer.data)
+
+    def put(self, request):
+        settings, created = UserSettings.objects.get_or_create(user=request.user)
+        serializer = UserSettingsSerializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return ApiResponse.success(serializer.data, message='Settings updated successfully')
+        return ApiResponse.error('Validation failed', 400, serializer.errors)
 
 
 @login_required

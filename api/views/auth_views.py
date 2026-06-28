@@ -327,6 +327,11 @@ class JWTMeView(APIView):
 
     def get(self, request):
         user = request.user
+        from ..models import UserSettings
+        from ..serializers import UserSettingsSerializer
+        settings, created = UserSettings.objects.get_or_create(user=user)
+        settings_data = UserSettingsSerializer(settings).data
+
         return ApiResponse.success({
             'id': user.id,
             'username': user.username,
@@ -335,6 +340,7 @@ class JWTMeView(APIView):
             'lastName': user.last_name,
             'dateJoined': user.date_joined.isoformat(),
             'lastLogin': user.last_login.isoformat() if user.last_login else None,
+            'settings': settings_data,
         })
 
 

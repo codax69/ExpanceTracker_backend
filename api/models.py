@@ -237,3 +237,35 @@ class Report(models.Model):
 
     def __str__(self):
         return f"{self.type} report ({self.start_date.date()} – {self.end_date.date()})"
+
+
+class UserSettings(models.Model):
+    """User preferences — replaces all localStorage storage."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
+
+    # Appearance
+    theme = models.CharField(max_length=10, default='dark', choices=[('dark', 'Dark'), ('light', 'Light')])
+    sidebar_collapsed = models.BooleanField(default=False)
+    compact_mode = models.BooleanField(default=False)
+    animations = models.BooleanField(default=True)
+
+    # Currency & Regional
+    currency = models.CharField(max_length=10, default='USD')
+    currency_symbol = models.CharField(max_length=5, default='$')
+    date_format = models.CharField(max_length=20, default='YYYY-MM-DD')
+    number_format = models.CharField(max_length=20, default='1,000.00')
+
+    # Notifications
+    budget_alerts = models.BooleanField(default=True)
+    weekly_report = models.BooleanField(default=True)
+    recurring_reminders = models.BooleanField(default=False)
+    auto_backup = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'user settings'
+
+    def __str__(self):
+        return f"Settings for {self.user.username}"

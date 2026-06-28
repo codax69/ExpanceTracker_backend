@@ -859,5 +859,11 @@
             showToast("Please select both start and end dates", "error");
           }
         });
+
+      // Listen to AI budget/expense changes and refresh the dashboard data
+      window.addEventListener('ai:finance:changed', (e) => {
+        initDashboard();
+      });
     </script>
+
 {% endblock %}

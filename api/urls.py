@@ -33,6 +33,7 @@ from .views.general_views import (
     ReportCSVView,
     ReportPDFView,
     ReportHistoryView,
+    UserSettingsView,
 )
 from .views.analytics_views import (
     AnalyticsKPIsView,
@@ -61,6 +62,9 @@ urlpatterns = [
     # ───── Category Routes ─────
     path('categories', CategoryListCreateView.as_view(), name='category-list-create'),
     path('categories/<int:pk>', CategoryDetailView.as_view(), name='category-detail'),
+
+    # ───── User Settings Routes ─────
+    path('settings', UserSettingsView.as_view(), name='user-settings'),
 
     # ───── Budget Routes ─────
     path('budget', BudgetSetView.as_view(), name='budget-set'),

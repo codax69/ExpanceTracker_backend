@@ -137,7 +137,6 @@
     </form>
   </div>
 </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -353,8 +352,23 @@
         }),
       });
 
-      // 2. Removed overwriting overall monthly budget via Budget API 
-      // to preserve the user's explicit budget set on the Expense page.
+      // 2. Also set overall monthly budget via Budget API
+      const now = new Date();
+      const totalBudget = allCategories.reduce((sum, c) => {
+        if (String(c.id) === String(catId))
+          return sum + Math.round(normalizedMonthly);
+        return sum + (parseFloat(c.monthlyBudget) || 0);
+      }, 0);
+
+      await Auth.apiFetch("/api/v1/budget", {
+        method: "POST",
+        body: JSON.stringify({
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+          totalMonthlyBudget: totalBudget,
+          warningThreshold: 80,
+        }),
+      });
 
       if (catRes && catRes.success) {
         showToast("Budget updated successfully!", "success");
@@ -364,5 +378,10 @@
         showToast("Failed to update budget", "error");
       }
     });
+
+  // Listen to AI budget/expense changes and refresh the page data
+  window.addEventListener('ai:finance:changed', (e) => {
+    fetchBudgetData();
+  });
 </script>
 {% endblock %}

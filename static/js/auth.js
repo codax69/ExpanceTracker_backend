@@ -161,6 +161,9 @@ const Auth = {
     const user = await this.fetchUser();
     if (user) {
       this.startAutoRefresh();
+      if (user.settings && typeof Settings !== "undefined") {
+        Settings.loadFromUser(user.settings);
+      }
       if (typeof updateProfileUI === 'function') {
         updateProfileUI();
       }

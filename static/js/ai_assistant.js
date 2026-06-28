@@ -84,17 +84,61 @@ async function sendMessage(overrideText) {
 
     if (data.success && data.data) {
       const d = data.data;
-      appendAiMessage(null, d);
+      appendAiMessage(d.message, d.crud_type || 'none', d.crud_record || null);
+      // Refresh expense list if an expense was mutated
+      if (d.crud_type && d.crud_type !== 'none' && d.crud_record) {
+        dispatchFinanceEvent(d.crud_type, d.crud_record);
+        refreshExpenseList();
+      }
     } else {
-      appendAiMessage(data.message || 'Sorry, I could not process that. Please try again.');
+      appendAiMessage(data.message || 'Sorry, I could not process that. Please try again.', 'none', null);
     }
   } catch (err) {
     typingEl.remove();
-    appendAiMessage('⚠️ Network error. Please check your connection and try again.');
+    appendAiMessage('\u26a0\ufe0f Network error. Please check your connection and try again.', 'none', null);
   }
 
   scrollToBottom();
 }
+
+// Dispatch a custom event so any page component (expense list, dashboard) can listen & refresh
+function dispatchFinanceEvent(action, record) {
+  try {
+    window.dispatchEvent(new CustomEvent('ai:finance:changed', {
+      detail: { action, record }
+    }));
+  } catch (e) {}
+}
+
+// Refresh any visible expense table/list on the current page
+async function refreshExpenseList() {
+  try {
+    const res = await fetch('/api/v1/expenses/?limit=10&page=1', {
+      headers: { 'X-CSRFToken': getCsrf() }
+    });
+    const data = await res.json();
+    if (!data.success) return;
+    const expenses = data.data?.expenses || data.data || [];
+
+    // Try to update a visible table body (id="expenseTableBody" or class="expense-list")
+    const tableBody = document.getElementById('expenseTableBody') ||
+                      document.querySelector('.expense-table tbody') ||
+                      document.querySelector('[data-expense-list]');
+    if (tableBody && expenses.length) {
+      tableBody.innerHTML = expenses.slice(0, 10).map(e => `
+        <tr>
+          <td>${escapeHtml(e.title || '')}</td>
+          <td>\u20b9${parseFloat(e.amount || 0).toLocaleString('en-IN')}</td>
+          <td>${escapeHtml(e.category || '')}</td>
+          <td>${escapeHtml(e.paymentMethod || e.payment_method || '')}</td>
+          <td>${e.expenseDate ? new Date(e.expenseDate).toLocaleDateString('en-IN') : ''}</td>
+        </tr>`).join('');
+    }
+  } catch (e) {
+    // Silently fail if no expense list on page
+  }
+}
+
 
 // ── Message Rendering ────────────────────────────────────────────────
 function hideWelcome() {
@@ -120,20 +164,75 @@ function appendUserMessage(text) {
   feed.appendChild(el);
 }
 
-function appendAiMessage(text, extractedData) {
+function appendAiMessage(text, crudType, crudRecord) {
   const now = formatTime(new Date());
   const el = document.createElement('div');
   el.className = 'ai-msg assistant';
 
-  let bubbleContent = '';
-  let extraContent = '';
+  const displayText = text || '';
+  const bubbleContent = renderMarkdown(displayText);
 
-  if (extractedData) {
-    bubbleContent = `✅ I've detected an expense from your input. Please review and confirm the details below before saving.`;
-    extraContent = buildExpenseCard(extractedData);
-  } else {
-    bubbleContent = renderMarkdown(text || '');
+  // CRUD badge
+  const crudBadges = {
+    created: { label: '\u2705 Created',  color: '#10b981' },
+    updated: { label: '\u270f\ufe0f Updated',  color: '#3b82f6' },
+    deleted: { label: '\ud83d\uddd1\ufe0f Deleted',  color: '#ef4444' },
+  };
+  const badge = crudBadges[crudType];
+  const badgeHtml = badge
+    ? `<span style="display:inline-block;margin-bottom:6px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px;background:${badge.color}22;color:${badge.color};border:1px solid ${badge.color}44">${badge.label}</span><br>`
+    : '';
+
+  // Inline record card for created/updated records
+  let recordHtml = '';
+  if (crudRecord && (crudType === 'created' || crudType === 'updated')) {
+
+    // ── BUDGET card ──────────────────────────────────────────────────
+    if (crudRecord.type === 'budget') {
+      const fmt = v => parseFloat(v || 0).toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+      recordHtml = `
+        <div style="margin-top:12px;background:var(--glass-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.5px;opacity:.5;margin-bottom:10px;text-transform:uppercase;">\uD83D\uDCB0 Budget — ${escapeHtml(crudRecord.month || '')}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+            <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px 6px;">
+              <div style="font-size:18px;font-weight:800;color:#10b981;">\u20b9${fmt(crudRecord.daily)}</div>
+              <div style="font-size:11px;opacity:.6;margin-top:3px;">Daily</div>
+            </div>
+            <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:10px 6px;">
+              <div style="font-size:18px;font-weight:800;color:#3b82f6;">\u20b9${fmt(crudRecord.weekly)}</div>
+              <div style="font-size:11px;opacity:.6;margin-top:3px;">Weekly</div>
+            </div>
+            <div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 6px;">
+              <div style="font-size:18px;font-weight:800;color:#8b5cf6;">\u20b9${fmt(crudRecord.total)}</div>
+              <div style="font-size:11px;opacity:.6;margin-top:3px;">Monthly</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:12px;">
+            <a href="/budget" style="color:#10b981;font-weight:600;text-decoration:none;">View budget details \u2192</a>
+          </div>
+        </div>`;
+
+    // ── EXPENSE card ─────────────────────────────────────────────────
+    } else if (crudRecord.title) {
+      const amt  = parseFloat(crudRecord.amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+      const date = crudRecord.expense_date ? new Date(crudRecord.expense_date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
+      const catColors = {Food:'#f97316',Transport:'#3b82f6',Shopping:'#8b5cf6',Entertainment:'#ec4899',Utilities:'#14b8a6',Health:'#ef4444',Education:'#f59e0b',Other:'#6b7280'};
+      const catColor = catColors[crudRecord.category] || '#10b981';
+      recordHtml = `
+        <div style="margin-top:10px;background:var(--glass-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:${catColor}22;border:1px solid ${catColor}44;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">\uD83D\uDCB0</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(crudRecord.title)}</div>
+            <div style="font-size:12px;opacity:.6;margin-top:2px;">${escapeHtml(crudRecord.category)} &bull; ${escapeHtml(crudRecord.payment_method||'')} &bull; ${date}</div>
+          </div>
+          <div style="font-weight:800;font-size:16px;color:${catColor};white-space:nowrap;">\u20b9${amt}</div>
+        </div>
+        <div style="margin-top:8px;">
+          <a href="/expenses" style="font-size:12px;color:#10b981;font-weight:600;text-decoration:none;">View all expenses \u2192</a>
+        </div>`;
+    }
   }
+
 
   el.innerHTML = `
     <div class="ai-msg-avatar">
@@ -143,11 +242,10 @@ function appendAiMessage(text, extractedData) {
       </svg>
     </div>
     <div class="ai-msg-content">
-      <div class="ai-bubble">${bubbleContent}</div>
-      ${extraContent ? `<div class="ai-msg-extra">${extraContent}</div>` : ''}
+      <div class="ai-bubble">${badgeHtml}${bubbleContent}${recordHtml}</div>
       <div class="ai-msg-meta">
         <span class="ai-msg-time">${now}</span>
-        <button class="ai-copy-btn" onclick="copyText(this, '${escapeAttr(text || bubbleContent)}')">
+        <button class="ai-copy-btn" onclick="copyText(this, '${escapeAttr(displayText)}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Copy
         </button>
@@ -155,6 +253,7 @@ function appendAiMessage(text, extractedData) {
     </div>`;
   feed.appendChild(el);
 }
+
 
 function buildExpenseCard(d) {
   const id = 'ec_' + Date.now();
@@ -299,8 +398,7 @@ if (uploadInput) {
 
       if (data.success && data.data) {
         const d = data.data;
-        // Show receipt preview then expense card
-        appendReceiptMessage(file, d);
+        appendAiMessage(d.message);
       } else {
         appendAiMessage(data.message || 'Could not read this receipt. Please try a clearer image.');
       }
@@ -440,7 +538,7 @@ async function processAudio(blob, mimeType) {
     typingEl.remove();
 
     if (data.success && data.data) {
-      appendAiMessage(null, data.data);
+      appendAiMessage(data.data.message);
     } else {
       appendAiMessage(data.message || 'Could not process voice input. Please try again.');
     }

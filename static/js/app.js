@@ -1,17 +1,21 @@
 // ===== EXPENSE TRACKER - SHARED APP JS =====
 
 // --- Theme ---
+// --- Theme ---
 function initTheme() {
-  const saved = localStorage.getItem("theme") || "dark";
-  if (saved === "light") document.body.classList.add("light-mode");
+  const theme = Settings.get("theme") || "dark";
+  if (theme === "light") {
+    document.body.classList.add("light-mode");
+  } else {
+    document.body.classList.remove("light-mode");
+  }
   updateThemeIcon();
 }
 function toggleTheme() {
   document.body.classList.toggle("light-mode");
-  localStorage.setItem(
-    "theme",
-    document.body.classList.contains("light-mode") ? "light" : "dark",
-  );
+  const isLight = document.body.classList.contains("light-mode");
+  const newTheme = isLight ? "light" : "dark";
+  Settings.set("theme", newTheme);
   updateThemeIcon();
   if (typeof updateChartsTheme === "function") updateChartsTheme();
 }
@@ -25,6 +29,17 @@ function updateThemeIcon() {
 }
 
 // --- Sidebar ---
+function applySidebarState() {
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) return;
+  const collapsed = Settings.get("sidebarCollapsed") === true;
+  if (collapsed && window.innerWidth > 1024) {
+    sidebar.classList.add("collapsed");
+  } else {
+    sidebar.classList.remove("collapsed");
+  }
+}
+
 function initSidebar() {
   const sidebar = document.getElementById("sidebar");
   const collapseBtn = document.getElementById("collapseBtn");
@@ -33,9 +48,9 @@ function initSidebar() {
   if (collapseBtn) {
     collapseBtn.addEventListener("click", () => {
       sidebar.classList.toggle("collapsed");
-      localStorage.setItem(
+      Settings.set(
         "sidebarCollapsed",
-        sidebar.classList.contains("collapsed"),
+        sidebar.classList.contains("collapsed")
       );
       // Trigger instant and delayed window resize to adjust layout and charts
       window.dispatchEvent(new Event("resize"));
@@ -59,12 +74,7 @@ function initSidebar() {
     }
   });
   // Restore state
-  if (
-    localStorage.getItem("sidebarCollapsed") === "true" &&
-    window.innerWidth > 1024
-  ) {
-    sidebar.classList.add("collapsed");
-  }
+  applySidebarState();
   // Set active nav based on current URL path
   const currentPath = location.pathname;
   document.querySelectorAll(".nav-item").forEach((item) => {
@@ -143,6 +153,8 @@ function initToggles() {
 // --- User Settings Manager ---
 const Settings = {
   defaults: {
+    theme: "dark",
+    sidebarCollapsed: false,
     currency: "USD",
     currencySymbol: "$",
     dateFormat: "YYYY-MM-DD",
@@ -157,16 +169,26 @@ const Settings = {
   _data: null,
 
   load() {
-    try {
-      const saved = localStorage.getItem("appSettings");
-      this._data = saved
-        ? { ...this.defaults, ...JSON.parse(saved) }
-        : { ...this.defaults };
-    } catch {
-      this._data = { ...this.defaults };
+    if (!this._data) {
+      if (typeof Auth !== "undefined" && Auth.getUser()) {
+        const user = Auth.getUser();
+        if (user && user.settings) {
+          this._data = { ...this.defaults, ...user.settings };
+        }
+      }
+      if (!this._data) {
+        this._data = { ...this.defaults };
+      }
     }
     this.apply();
     return this._data;
+  },
+
+  loadFromUser(data) {
+    this._data = { ...this.defaults, ...data };
+    this.apply();
+    initTheme();
+    applySidebarState();
   },
 
   get(key) {
@@ -174,11 +196,37 @@ const Settings = {
     return this._data[key];
   },
 
-  set(key, value) {
+  async set(key, value) {
     if (!this._data) this.load();
     this._data[key] = value;
-    localStorage.setItem("appSettings", JSON.stringify(this._data));
     this.apply();
+
+    if (key === "theme") {
+      updateThemeIcon();
+      if (typeof updateChartsTheme === "function") updateChartsTheme();
+    } else if (key === "sidebarCollapsed") {
+      const sidebar = document.getElementById("sidebar");
+      if (sidebar) {
+        if (value) sidebar.classList.add("collapsed");
+        else sidebar.classList.remove("collapsed");
+        window.dispatchEvent(new Event("resize"));
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 260);
+      }
+    }
+
+    // Persist to DB
+    if (typeof Auth !== "undefined" && Auth.isLoggedIn()) {
+      try {
+        const payload = {};
+        payload[key] = value;
+        await Auth.apiFetch("/api/v1/settings", {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+      } catch (e) {
+        console.error("Failed to save settings to DB:", e);
+      }
+    }
   },
 
   getAll() {

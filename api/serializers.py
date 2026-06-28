@@ -141,3 +141,27 @@ class ReportSerializer(serializers.ModelSerializer):
         ret = super().to_representation(instance)
         ret['_id'] = str(ret['id'])
         return ret
+
+
+# ───── User Settings Serializer ─────
+from .models import UserSettings
+
+class UserSettingsSerializer(serializers.ModelSerializer):
+    sidebarCollapsed = serializers.BooleanField(source='sidebar_collapsed', required=False)
+    compactMode = serializers.BooleanField(source='compact_mode', required=False)
+    currencySymbol = serializers.CharField(source='currency_symbol', required=False)
+    dateFormat = serializers.CharField(source='date_format', required=False)
+    numberFormat = serializers.CharField(source='number_format', required=False)
+    budgetAlerts = serializers.BooleanField(source='budget_alerts', required=False)
+    weeklyReport = serializers.BooleanField(source='weekly_report', required=False)
+    recurringReminders = serializers.BooleanField(source='recurring_reminders', required=False)
+    autoBackup = serializers.BooleanField(source='auto_backup', required=False)
+
+    class Meta:
+        model = UserSettings
+        fields = [
+            'theme', 'sidebarCollapsed', 'compactMode', 'animations',
+            'currency', 'currencySymbol', 'dateFormat', 'numberFormat',
+            'budgetAlerts', 'weeklyReport', 'recurringReminders', 'autoBackup'
+        ]
+
