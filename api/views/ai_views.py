@@ -319,7 +319,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             e = qs.first()
             name, amt = e.title, e.amount
             e.delete()
-            return ok(f"🗑️ Deleted **{name}** (₹{amt})", "deleted")
+            return ok(f"🗑️ Deleted **{name}** (₹{amt})", "deleted", {"id": e.id})
 
         # ── LIST EXPENSES ─────────────────────────────────────────────
         elif intent == "list_expenses":
@@ -412,7 +412,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             i = qs.first()
             name, amt = i.source, i.amount
             i.delete()
-            return ok(f"🗑️ Deleted income **{name}** (₹{amt})", "deleted")
+            return ok(f"🗑️ Deleted income **{name}** (₹{amt})", "deleted", {"id": i.id})
 
         # ── LIST INCOMES ──────────────────────────────────────────────
         elif intent == "list_incomes":
@@ -447,49 +447,31 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
             existing = Budget.objects.filter(user=user, month=month, year=year).first()
 
-            payload = {"month": month, "year": year}
-
             total_val   = _get_non_none(["total", "monthly", "monthly_budget", "totalMonthlyBudget"], data)
             weekly_val  = _get_non_none(["weekly", "weekly_budget", "weeklyBudget"], data)
             daily_val   = _get_non_none(["daily", "daily_budget", "dailyBudget"], data)
             yearly_val  = _get_non_none(["yearly", "yearly_budget", "yearlyBudget"], data)
             warning_val = _get_non_none(["warning_threshold", "warningThreshold", "threshold"], data)
 
-            # Only include fields AI explicitly provided; for new budget default others to 0
-            if total_val is not None:
-                payload["totalMonthlyBudget"] = _to_float(total_val)
-            elif not existing:
-                payload["totalMonthlyBudget"] = 0.0
+            total = _to_float(total_val) if total_val is not None else (existing.total_monthly_budget if existing else 0.0)
+            weekly = _to_float(weekly_val) if weekly_val is not None else (existing.weekly_budget if existing else 0.0)
+            daily = _to_float(daily_val) if daily_val is not None else (existing.daily_budget if existing else 0.0)
+            yearly = _to_float(yearly_val) if yearly_val is not None else (existing.yearly_budget if existing else 0.0)
+            threshold = int(_to_float(warning_val)) if warning_val is not None else (existing.warning_threshold if existing else 80)
 
-            if weekly_val is not None:
-                payload["weeklyBudget"] = _to_float(weekly_val)
-            elif not existing:
-                payload["weeklyBudget"] = 0.0
-
-            if daily_val is not None:
-                payload["dailyBudget"] = _to_float(daily_val)
-            elif not existing:
-                payload["dailyBudget"] = 0.0
-
-            if yearly_val is not None:
-                payload["yearlyBudget"] = _to_float(yearly_val)
-            elif not existing:
-                payload["yearlyBudget"] = 0.0
-
-            if warning_val is not None:
-                payload["warningThreshold"] = int(_to_float(warning_val, 80))
-
-            ser = (
-                BudgetSerializer(existing, data=payload, partial=True)
-                if existing
-                else BudgetSerializer(data=payload)
+            b, created = Budget.objects.update_or_create(
+                user=user, month=month, year=year,
+                defaults={
+                    "total_monthly_budget": total,
+                    "weekly_budget": weekly,
+                    "daily_budget": daily,
+                    "yearly_budget": yearly,
+                    "warning_threshold": threshold,
+                }
             )
-            if not ser.is_valid():
-                return err(f"❌ Validation failed: {ser.errors}")
-            b = ser.save(user=user)
 
             month_label = datetime(b.year, b.month, 1).strftime("%B %Y")
-            verb        = "Updated" if existing else "Created"
+            verb        = "Created" if created else "Updated"
             record = {
                 "type": "budget", "month": month_label,
                 "total": float(b.total_monthly_budget),
@@ -499,7 +481,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             return ok(
                 f"💰 {verb} budget for **{month_label}** — "
                 f"₹{b.total_monthly_budget:.0f}/month | ₹{b.weekly_budget:.0f}/week | ₹{b.daily_budget:.0f}/day",
-                "updated" if existing else "created",
+                "updated" if not created else "created",
                 record,
             )
 
@@ -515,7 +497,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                 return err(f"❌ No budget found for {label}.")
             label = datetime(b.year, b.month, 1).strftime("%B %Y")
             b.delete()
-            return ok(f"🗑️ Deleted budget for **{label}**", "deleted")
+            return ok(f"🗑️ Deleted budget for **{label}**", "deleted", {"type": "budget"})
 
         # ── LIST BUDGETS ──────────────────────────────────────────────
         elif intent == "list_budgets":
@@ -549,7 +531,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             if not ser.is_valid():
                 return err(f"❌ Validation failed: {ser.errors}")
             c = ser.save(user=user)
-            return ok(f"✅ Created category **{c.name}** (₹{c.monthly_budget:.0f}/month)", "created")
+            return ok(f"✅ Created category **{c.name}** (₹{c.monthly_budget:.0f}/month)", "created", CategorySerializer(c).data)
 
         # ── EDIT CATEGORY ─────────────────────────────────────────────
         elif intent == "edit_category":
@@ -570,6 +552,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             return ok(
                 f"✏️ Updated category **{c.name}** (budget ₹{c.monthly_budget:.0f}/month)",
                 "updated",
+                CategorySerializer(c).data
             )
 
         # ── DELETE CATEGORY ───────────────────────────────────────────
@@ -582,7 +565,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             except Category.DoesNotExist:
                 return err(f"❌ Category '{name}' not found.")
             c.delete()
-            return ok(f"🗑️ Deleted category **{name}**", "deleted")
+            return ok(f"🗑️ Deleted category **{name}**", "deleted", {"type": "category"})
 
         # ── LIST CATEGORIES ───────────────────────────────────────────
         elif intent == "list_categories":
