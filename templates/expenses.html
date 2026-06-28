@@ -1267,7 +1267,7 @@
         const month = now.getMonth() + 1;
         const year = now.getFullYear();
         try {
-          const budgetRes = await Auth.apiFetch(`/api/v1/budget?month=${month}&year=${year}`);
+          const budgetRes = await Auth.apiFetch(`/api/v1/budget/?month=${month}&year=${year}`);
           if (budgetRes && budgetRes.success && budgetRes.data) {
             budgets.daily = parseFloat(budgetRes.data.dailyBudget) || 0;
             budgets.weekly = parseFloat(budgetRes.data.weeklyBudget) || 0;

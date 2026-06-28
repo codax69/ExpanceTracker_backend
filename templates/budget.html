@@ -6,238 +6,224 @@
 
 {% block content %}
 <div class="page fade-in">
-        <!-- Top KPIs / Monthly Budget / Progress -->
-        <div class="kpi-grid">
-          <div class="kpi-card fade-in stagger-1">
-            <div class="kpi-header">
-              <div class="kpi-label">Total Budget</div>
-              <div class="kpi-icon purple">🎯</div>
-            </div>
-            <div class="kpi-value" id="kpiTotalBudget">₹0</div>
-          </div>
-          <div class="kpi-card fade-in stagger-2">
-            <div class="kpi-header">
-              <div class="kpi-label">Total Spent</div>
-              <div class="kpi-icon red">💸</div>
-            </div>
-            <div class="kpi-value" id="kpiTotalSpent">₹0</div>
-          </div>
-          <div class="kpi-card fade-in stagger-3">
-            <div class="kpi-header">
-              <div class="kpi-label">Remaining Budget</div>
-              <div class="kpi-icon green">💰</div>
-            </div>
-            <div class="kpi-value" id="kpiRemainingBudget">₹0</div>
-          </div>
-          <div class="kpi-card fade-in stagger-4">
-            <div class="kpi-header">
-              <div class="kpi-label">Saving Ratio</div>
-              <div class="kpi-icon blue">📈</div>
-            </div>
-            <div class="kpi-value" id="kpiSavingRatio">0%</div>
-          </div>
-        </div>
-
-        <!-- Set Budget Card Grid -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 28px; margin-bottom: 16px;">
-          <h2 class="card-title" style="font-size: 18px; font-weight: 600;">Category Budgets</h2>
-          <button class="btn btn-primary btn-sm" onclick="openModal('budgetModal')">
-            + Set Budget
-          </button>
-        </div>
-        <div id="budgetGrid" class="budget-grid"></div>
-
-        <!-- Add Categories -->
-        <div class="card" style="margin-top: 24px">
-          <div class="card-header">
-            <div class="card-title">Add Categories</div>
-          </div>
-          <div class="card-body" style="padding: 16px;">
-            <form id="addCategoryForm" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
-              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
-                <label class="form-label">Category Name</label>
-                <input type="text" class="form-input" id="newCatName" required placeholder="e.g. Travel">
-              </div>
-              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
-                <label class="form-label">Icon</label>
-                <input type="text" class="form-input" id="newCatIcon" placeholder="Emoji (e.g. ✈️)">
-              </div>
-              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
-                <label class="form-label">Color</label>
-                <input type="color" class="form-input" id="newCatColor" value="#06b6d4" style="padding: 4px; height: 42px;">
-              </div>
-              <button type="submit" class="btn btn-primary" style="height: 42px;">Add Category</button>
-            </form>
-            <div id="customCategoriesList" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"></div>
-          </div>
-        </div>
-
-        <!-- Budget History -->
-        <div class="card" style="margin-top: 24px">
-          <div class="card-header">
-            <div class="card-title">Budget History</div>
-          </div>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Set Budget</th>
-                  <th>Actual Spent</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="budgetHistoryBody">
-                <tr>
-                  <td
-                    colspan="4"
-                    style="text-align: center; color: var(--text-muted)"
-                  >
-                    Loading...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <!-- Top KPIs / Monthly Budget / Progress -->
+  <div class="kpi-grid">
+    <div class="kpi-card fade-in stagger-1">
+      <div class="kpi-header">
+        <div class="kpi-label">Total Budget</div>
+        <div class="kpi-icon purple">🎯</div>
       </div>
-
-      <!-- Set Budget Modal -->
-      <div class="modal-overlay" id="budgetModal">
-        <div class="modal">
-          <div class="modal-header">
-            <h2 class="modal-title">Set Category Budget</h2>
-            <button class="modal-close" onclick="closeModal('budgetModal')">
-              ✕
-            </button>
-          </div>
-          <form id="budgetForm">
-            <div class="form-group">
-              <label class="form-label">Category</label>
-              <select class="form-select" id="bCategory" required></select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Timeframe</label>
-              <select class="form-select" id="bTimeframe" required>
-                <option value="monthly">Monthly</option>
-                <option value="weekly">Weekly</option>
-                <option value="daily">Daily</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Amount ($)</label>
-              <input
-                type="number"
-                class="form-input"
-                id="bAmount"
-                required
-                min="1"
-                step="0.01"
-                placeholder="e.g. 100"
-              />
-            </div>
-            <div style="display: flex; gap: 12px; margin-top: 24px">
-              <button type="submit" class="btn btn-primary" style="flex: 1">
-                Save Budget
-              </button>
-              <button
-                type="button"
-                class="btn btn-secondary"
-                onclick="closeModal('budgetModal')"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+      <div class="kpi-value" id="kpiTotalBudget">₹0</div>
+    </div>
+    <div class="kpi-card fade-in stagger-2">
+      <div class="kpi-header">
+        <div class="kpi-label">Total Spent</div>
+        <div class="kpi-icon red">💸</div>
       </div>
+      <div class="kpi-value" id="kpiTotalSpent">₹0</div>
+    </div>
+    <div class="kpi-card fade-in stagger-3">
+      <div class="kpi-header">
+        <div class="kpi-label">Remaining Budget</div>
+        <div class="kpi-icon green">💰</div>
+      </div>
+      <div class="kpi-value" id="kpiRemainingBudget">₹0</div>
+    </div>
+    <div class="kpi-card fade-in stagger-4">
+      <div class="kpi-header">
+        <div class="kpi-label">Saving Ratio</div>
+        <div class="kpi-icon blue">📈</div>
+      </div>
+      <div class="kpi-value" id="kpiSavingRatio">0%</div>
+    </div>
+  </div>
+
+  <!-- Set Budget Card Grid -->
+  <div
+    style="display: flex; justify-content: space-between; align-items: center; margin-top: 28px; margin-bottom: 16px;">
+    <h2 class="card-title" style="font-size: 18px; font-weight: 600;">Category Budgets</h2>
+    <button class="btn btn-primary btn-sm" onclick="openModal('budgetModal')">
+      + Set Budget
+    </button>
+  </div>
+  <div id="budgetGrid" class="budget-grid"></div>
+
+  <!-- Add Categories -->
+  <div class="card" style="margin-top: 24px">
+    <div class="card-header">
+      <div class="card-title">Add Categories</div>
+    </div>
+    <div class="card-body" style="padding: 16px;">
+      <form id="addCategoryForm" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+          <label class="form-label">Category Name</label>
+          <input type="text" class="form-input" id="newCatName" required placeholder="e.g. Travel">
+        </div>
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+          <label class="form-label">Icon</label>
+          <input type="text" class="form-input" id="newCatIcon" placeholder="Emoji (e.g. ✈️)">
+        </div>
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+          <label class="form-label">Color</label>
+          <input type="color" class="form-input" id="newCatColor" value="#06b6d4" style="padding: 4px; height: 42px;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="height: 42px;">Add Category</button>
+      </form>
+      <div id="customCategoriesList" style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+  </div>
+
+  <!-- Budget History -->
+  <div class="card" style="margin-top: 24px">
+    <div class="card-header">
+      <div class="card-title">Budget History</div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Set Budget</th>
+            <th>Actual Spent</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="budgetHistoryBody">
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-muted)">
+              Loading...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Set Budget Modal -->
+<div class="modal-overlay" id="budgetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Set Category Budget</h2>
+      <button class="modal-close" onclick="closeModal('budgetModal')">
+        ✕
+      </button>
+    </div>
+    <form id="budgetForm">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="bCategory" required></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Timeframe</label>
+        <select class="form-select" id="bTimeframe" required>
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="daily">Daily</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount ($)</label>
+        <input type="number" class="form-input" id="bAmount" required min="1" step="0.01" placeholder="e.g. 100" />
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 24px">
+        <button type="submit" class="btn btn-primary" style="flex: 1">
+          Save Budget
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('budgetModal')">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-    <script>
-      function openModal(id) {
-        document.getElementById(id).classList.add("open");
-      }
-      function closeModal(id) {
-        document.getElementById(id).classList.remove("open");
-      }
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add("open");
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove("open");
+  }
 
-      let allCategories = [];
-      let analyticsData = [];
-      let budgetWarnings = null;
-      let budgetHistory = [];
+  let allCategories = [];
+  let analyticsData = [];
+  let budgetWarnings = null;
+  let budgetHistory = [];
 
-      async function fetchBudgetData() {
-        if (typeof Auth !== "undefined") await Auth.init();
-        const now = new Date();
+  async function fetchBudgetData() {
+    if (typeof Auth !== "undefined") await Auth.init();
+    const now = new Date();
 
-        const [catRes, analyticsRes, warningsRes, historyRes] =
-          await Promise.all([
-            Auth.apiFetch("/api/v1/categories"),
-            Auth.apiFetch("/api/v1/analytics/categories"),
-            Auth.apiFetch("/api/v1/budget/warnings"),
-            Auth.apiFetch("/api/v1/budget/all"),
-          ]);
+    const [catRes, analyticsRes, warningsRes, historyRes] =
+      await Promise.all([
+        Auth.apiFetch("/api/v1/categories"),
+        Auth.apiFetch("/api/v1/analytics/categories"),
+        Auth.apiFetch("/api/v1/budget/warnings"),
+        Auth.apiFetch("/api/v1/budget/all"),
+      ]);
 
-        if (catRes && catRes.success) allCategories = catRes.data;
-        if (analyticsRes && analyticsRes.success)
-          analyticsData = analyticsRes.data;
-        if (warningsRes && warningsRes.success)
-          budgetWarnings = warningsRes.data;
-        if (historyRes && historyRes.success) budgetHistory = historyRes.data;
+    if (catRes && catRes.success) allCategories = catRes.data;
+    if (analyticsRes && analyticsRes.success)
+      analyticsData = analyticsRes.data;
+    if (warningsRes && warningsRes.success)
+      budgetWarnings = warningsRes.data;
+    if (historyRes && historyRes.success) budgetHistory = historyRes.data;
 
-        // Populate Categories Dropdown
-        const catSelect = document.getElementById("bCategory");
-        catSelect.innerHTML = "";
-        allCategories.forEach((c) => {
-          catSelect.innerHTML += `<option value="${c.id}"><i class="ph ${c.icon || 'ph-package'}"></i> ${c.name}</option>`;
-        });
+    // Populate Categories Dropdown
+    const catSelect = document.getElementById("bCategory");
+    catSelect.innerHTML = "";
+    allCategories.forEach((c) => {
+      catSelect.innerHTML += `<option value="${c.id}"><i class="ph ${c.icon || 'ph-package'}"></i> ${c.name}</option>`;
+    });
 
-        renderBudgets();
-        renderCustomCategories();
-        renderBudgetHistory();
-      }
+    renderBudgets();
+    renderCustomCategories();
+    renderBudgetHistory();
+  }
 
-      function renderBudgets() {
-        const grid = document.getElementById("budgetGrid");
-        grid.innerHTML = "";
-        let totalBudget = 0,
-          totalSpent = 0;
+  function renderBudgets() {
+    const grid = document.getElementById("budgetGrid");
+    grid.innerHTML = "";
+    let totalBudget = 0,
+      totalSpent = 0;
 
-        // Use overall budget from warnings API if available
-        if (budgetWarnings && budgetWarnings.budget) {
-          totalBudget = budgetWarnings.budget;
-          totalSpent = budgetWarnings.spent || 0;
-        }
+    // Use overall budget from warnings API if available
+    if (budgetWarnings && budgetWarnings.budget) {
+      totalBudget = budgetWarnings.budget;
+      totalSpent = budgetWarnings.spent || 0;
+    }
 
-        if (allCategories.length === 0) {
-          grid.innerHTML = `
+    if (allCategories.length === 0) {
+      grid.innerHTML = `
             <div class="card" style="grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; padding: 40px;">
               <span style="color: var(--text-secondary);">No budgets configured. Click "+ Set Budget" to set category limits.</span>
             </div>`;
-        }
+    }
 
-        allCategories.forEach((c) => {
-          const aData = analyticsData.find((a) => a.category === c.name) || {
-            spent: 0,
-          };
-          const spent = aData.spent || 0;
-          const budget = parseFloat(c.monthlyBudget) || 0;
-          if (!budgetWarnings || !budgetWarnings.budget) {
-            totalBudget += budget;
-            totalSpent += spent;
-          }
-          const progress = budget > 0 ? Math.min(Math.round((spent / budget) * 100), 100) : 0;
-          const remaining = budget - spent;
-          const color = c.color || "#447D9B";
+    allCategories.forEach((c) => {
+      const aData = analyticsData.find((a) => a.category === c.name) || {
+        spent: 0,
+      };
+      const spent = aData.spent || 0;
+      const budget = parseFloat(c.monthlyBudget) || 0;
+      if (!budgetWarnings || !budgetWarnings.budget) {
+        totalBudget += budget;
+        totalSpent += spent;
+      }
+      const progress = budget > 0 ? Math.min(Math.round((spent / budget) * 100), 100) : 0;
+      const remaining = budget - spent;
+      const color = c.color || "#447D9B";
 
-          // Calculate circular progress offset (circumference = 201.06)
-          const dashoffset = 201.06 * (1 - progress / 100);
-          const isOverBudget = remaining < 0;
-          const statusColor = isOverBudget ? "var(--accent-danger)" : "var(--accent-success)";
+      // Calculate circular progress offset (circumference = 201.06)
+      const dashoffset = 201.06 * (1 - progress / 100);
+      const isOverBudget = remaining < 0;
+      const statusColor = isOverBudget ? "var(--accent-danger)" : "var(--accent-success)";
 
-          grid.innerHTML += `
+      grid.innerHTML += `
             <div class="budget-card fade-in">
               <div class="budget-card-header">
                 <span class="badge" style="background:${color}20; color:${color}"><i class="ph ${c.icon || 'ph-package'}"></i> ${c.name}</span>
@@ -260,28 +246,28 @@
                 </div>
               </div>
             </div>`;
-        });
+    });
 
-        const remainingBudget = totalBudget - totalSpent;
-        document.getElementById("kpiTotalBudget").textContent =
-          Settings.formatCurrency(totalBudget);
-        document.getElementById("kpiTotalSpent").textContent =
-          Settings.formatCurrency(totalSpent);
-        document.getElementById("kpiRemainingBudget").textContent =
-          Settings.formatCurrency(remainingBudget);
-        const savingRatio =
-          totalBudget > 0
-            ? ((remainingBudget / totalBudget) * 100).toFixed(1)
-            : 0;
-        document.getElementById("kpiSavingRatio").textContent =
-          (savingRatio > 0 ? savingRatio : 0) + "%";
-      }
+    const remainingBudget = totalBudget - totalSpent;
+    document.getElementById("kpiTotalBudget").textContent =
+      Settings.formatCurrency(totalBudget);
+    document.getElementById("kpiTotalSpent").textContent =
+      Settings.formatCurrency(totalSpent);
+    document.getElementById("kpiRemainingBudget").textContent =
+      Settings.formatCurrency(remainingBudget);
+    const savingRatio =
+      totalBudget > 0
+        ? ((remainingBudget / totalBudget) * 100).toFixed(1)
+        : 0;
+    document.getElementById("kpiSavingRatio").textContent =
+      (savingRatio > 0 ? savingRatio : 0) + "%";
+  }
 
-      function renderCustomCategories() {
-        const container = document.getElementById("customCategoriesList");
-        container.innerHTML = "";
-        allCategories.forEach((c) => {
-          container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-hover); border-radius:var(--radius-md); border:1px solid var(--glass-border);">
+  function renderCustomCategories() {
+    const container = document.getElementById("customCategoriesList");
+    container.innerHTML = "";
+    allCategories.forEach((c) => {
+      container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-hover); border-radius:var(--radius-md); border:1px solid var(--glass-border);">
             <div style="display:flex; align-items:center; gap:12px;">
               <span style="font-size: 20px; display: inline-flex; align-items: center;"><i class="ph ${c.icon || 'ph-package'}" style="font-size: 20px;"></i></span>
               <span style="font-weight:600; color:var(--text-primary);">${c.name}</span>
@@ -290,108 +276,93 @@
               <div style="width: 20px; height: 20px; border-radius: 50%; background: ${c.color || '#06b6d4'};"></div>
             </div>
           </div>`;
-        });
-      }
+    });
+  }
 
-      document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('newCatName').value;
-        const icon = document.getElementById('newCatIcon').value || '📦';
-        const color = document.getElementById('newCatColor').value;
-        
-        const res = await Auth.apiFetch('/api/v1/categories', {
-          method: 'POST',
-          body: JSON.stringify({ name, icon, color, monthlyBudget: 0 })
-        });
-        
-        if (res && res.success) {
-          showToast('Category added successfully!', 'success');
-          document.getElementById('addCategoryForm').reset();
-          fetchBudgetData();
-        } else {
-          showToast('Failed to add category', 'error');
-        }
+  document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('newCatName').value;
+    const icon = document.getElementById('newCatIcon').value || '📦';
+    const color = document.getElementById('newCatColor').value;
+
+    const res = await Auth.apiFetch('/api/v1/categories', {
+      method: 'POST',
+      body: JSON.stringify({ name, icon, color, monthlyBudget: 0 })
+    });
+
+    if (res && res.success) {
+      showToast('Category added successfully!', 'success');
+      document.getElementById('addCategoryForm').reset();
+      fetchBudgetData();
+    } else {
+      showToast('Failed to add category', 'error');
+    }
+  });
+
+  function renderBudgetHistory() {
+    const historyBody = document.getElementById("budgetHistoryBody");
+    if (!historyBody) return;
+    historyBody.innerHTML = "";
+    if (budgetHistory.length === 0) {
+      historyBody.innerHTML =
+        '<tr><td colspan="4" style="text-align:center">No budget history yet</td></tr>';
+      return;
+    }
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    budgetHistory.forEach((b) => {
+      const label = months[b.month - 1] + " " + b.year;
+      const budget = parseFloat(b.totalMonthlyBudget) || 0;
+      const statusBadge = '<span class="badge badge-cyan">Set</span>';
+      historyBody.innerHTML += `<tr><td>${label}</td><td>${Settings.formatCurrency(budget)}</td><td>—</td><td>${statusBadge}</td></tr>`;
+    });
+  }
+
+  fetchBudgetData();
+
+  // Form: set category budget + overall monthly budget
+  document
+    .getElementById("budgetForm")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const catId = document.getElementById("bCategory").value;
+      const timeframe = document.getElementById("bTimeframe").value;
+      let amount = parseFloat(document.getElementById("bAmount").value);
+
+      let normalizedMonthly = amount;
+      if (timeframe === "weekly") normalizedMonthly = amount * 4.33;
+      if (timeframe === "daily") normalizedMonthly = amount * 30;
+
+      // 1. Update category budget
+      const catRes = await Auth.apiFetch(`/api/v1/categories/${catId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          monthlyBudget: Math.round(normalizedMonthly),
+        }),
       });
 
-      function renderBudgetHistory() {
-        const historyBody = document.getElementById("budgetHistoryBody");
-        if (!historyBody) return;
-        historyBody.innerHTML = "";
-        if (budgetHistory.length === 0) {
-          historyBody.innerHTML =
-            '<tr><td colspan="4" style="text-align:center">No budget history yet</td></tr>';
-          return;
-        }
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ];
-        budgetHistory.forEach((b) => {
-          const label = months[b.month - 1] + " " + b.year;
-          const budget = parseFloat(b.totalMonthlyBudget) || 0;
-          const statusBadge = '<span class="badge badge-cyan">Set</span>';
-          historyBody.innerHTML += `<tr><td>${label}</td><td>${Settings.formatCurrency(budget)}</td><td>—</td><td>${statusBadge}</td></tr>`;
-        });
+      // 2. Removed overwriting overall monthly budget via Budget API 
+      // to preserve the user's explicit budget set on the Expense page.
+
+      if (catRes && catRes.success) {
+        showToast("Budget updated successfully!", "success");
+        closeModal("budgetModal");
+        fetchBudgetData();
+      } else {
+        showToast("Failed to update budget", "error");
       }
-
-      fetchBudgetData();
-
-      // Form: set category budget + overall monthly budget
-      document
-        .getElementById("budgetForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const catId = document.getElementById("bCategory").value;
-          const timeframe = document.getElementById("bTimeframe").value;
-          let amount = parseFloat(document.getElementById("bAmount").value);
-
-          let normalizedMonthly = amount;
-          if (timeframe === "weekly") normalizedMonthly = amount * 4.33;
-          if (timeframe === "daily") normalizedMonthly = amount * 30;
-
-          // 1. Update category budget
-          const catRes = await Auth.apiFetch(`/api/v1/categories/${catId}`, {
-            method: "PUT",
-            body: JSON.stringify({
-              monthlyBudget: Math.round(normalizedMonthly),
-            }),
-          });
-
-          // 2. Also set overall monthly budget via Budget API
-          const now = new Date();
-          const totalBudget = allCategories.reduce((sum, c) => {
-            if (String(c.id) === String(catId))
-              return sum + Math.round(normalizedMonthly);
-            return sum + (parseFloat(c.monthlyBudget) || 0);
-          }, 0);
-
-          await Auth.apiFetch("/api/v1/budget", {
-            method: "POST",
-            body: JSON.stringify({
-              month: now.getMonth() + 1,
-              year: now.getFullYear(),
-              totalMonthlyBudget: totalBudget,
-              warningThreshold: 80,
-            }),
-          });
-
-          if (catRes && catRes.success) {
-            showToast("Budget updated successfully!", "success");
-            closeModal("budgetModal");
-            fetchBudgetData();
-          } else {
-            showToast("Failed to update budget", "error");
-          }
-        });
-    </script>
+    });
+</script>
 {% endblock %}
