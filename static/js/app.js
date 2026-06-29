@@ -170,14 +170,27 @@ const Settings = {
 
   load() {
     if (!this._data) {
+      // 1. Load from local cache for immediate synchronous init
+      if (typeof window !== "undefined" && window.localStorage) {
+        try {
+          const stored = localStorage.getItem("expense_iq_settings");
+          if (stored) {
+            this._data = { ...this.defaults, ...JSON.parse(stored) };
+          }
+        } catch (e) { }
+      }
+
+      if (!this._data) {
+        this._data = { ...this.defaults };
+      }
+
+      // 2. Load from user if available synchronously
       if (typeof Auth !== "undefined" && Auth.getUser()) {
         const user = Auth.getUser();
         if (user && user.settings) {
-          this._data = { ...this.defaults, ...user.settings };
+          this._data = { ...this._data, ...user.settings };
+          this._saveLocal();
         }
-      }
-      if (!this._data) {
-        this._data = { ...this.defaults };
       }
     }
     this.apply();
@@ -185,10 +198,19 @@ const Settings = {
   },
 
   loadFromUser(data) {
-    this._data = { ...this.defaults, ...data };
+    this._data = { ...this.defaults, ...(this._data || {}), ...data };
+    this._saveLocal();
     this.apply();
     initTheme();
     applySidebarState();
+  },
+
+  _saveLocal() {
+    if (typeof window !== "undefined" && window.localStorage && this._data) {
+      try {
+        localStorage.setItem("expense_iq_settings", JSON.stringify(this._data));
+      } catch (e) { }
+    }
   },
 
   get(key) {
@@ -199,6 +221,7 @@ const Settings = {
   async set(key, value) {
     if (!this._data) this.load();
     this._data[key] = value;
+    this._saveLocal();
     this.apply();
 
     if (key === "theme") {

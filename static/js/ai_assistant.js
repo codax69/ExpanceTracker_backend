@@ -127,10 +127,10 @@ async function refreshExpenseList() {
       tableBody.innerHTML = expenses.slice(0, 10).map(e => `
         <tr>
           <td>${escapeHtml(e.title || '')}</td>
-          <td>\u20b9${parseFloat(e.amount || 0).toLocaleString('en-IN')}</td>
+          <td>${formatCurrency(parseFloat(e.amount || 0))}</td>
           <td>${escapeHtml(e.category || '')}</td>
           <td>${escapeHtml(e.paymentMethod || e.payment_method || '')}</td>
-          <td>${e.expenseDate ? new Date(e.expenseDate).toLocaleDateString('en-IN') : ''}</td>
+          <td>${e.expenseDate ? new Date(e.expenseDate).toLocaleDateString(undefined) : ''}</td>
         </tr>`).join('');
     }
   } catch (e) {
@@ -188,21 +188,21 @@ function appendAiMessage(text, crudType, crudRecord) {
 
     // ── BUDGET card ──────────────────────────────────────────────────
     if (crudRecord.type === 'budget') {
-      const fmt = v => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      const fmt = v => formatCurrency(parseFloat(v || 0));
       recordHtml = `
         <div style="margin-top:12px;background:var(--glass-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;">
           <div style="font-size:11px;font-weight:700;letter-spacing:.5px;opacity:.5;margin-bottom:10px;text-transform:uppercase;">\uD83D\uDCB0 Budget — ${escapeHtml(crudRecord.month || '')}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
             <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px 6px;">
-              <div style="font-size:18px;font-weight:800;color:#10b981;">\u20b9${fmt(crudRecord.daily)}</div>
+              <div style="font-size:18px;font-weight:800;color:#10b981;">${fmt(crudRecord.daily)}</div>
               <div style="font-size:11px;opacity:.6;margin-top:3px;">Daily</div>
             </div>
             <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:10px 6px;">
-              <div style="font-size:18px;font-weight:800;color:#3b82f6;">\u20b9${fmt(crudRecord.weekly)}</div>
+              <div style="font-size:18px;font-weight:800;color:#3b82f6;">${fmt(crudRecord.weekly)}</div>
               <div style="font-size:11px;opacity:.6;margin-top:3px;">Weekly</div>
             </div>
             <div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 6px;">
-              <div style="font-size:18px;font-weight:800;color:#8b5cf6;">\u20b9${fmt(crudRecord.total)}</div>
+              <div style="font-size:18px;font-weight:800;color:#8b5cf6;">${fmt(crudRecord.total)}</div>
               <div style="font-size:11px;opacity:.6;margin-top:3px;">Monthly</div>
             </div>
           </div>
@@ -213,8 +213,8 @@ function appendAiMessage(text, crudType, crudRecord) {
 
       // ── EXPENSE card ─────────────────────────────────────────────────
     } else if (crudRecord.title) {
-      const amt = parseFloat(crudRecord.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-      const date = crudRecord.expense_date ? new Date(crudRecord.expense_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+      const amt = formatCurrency(parseFloat(crudRecord.amount || 0));
+      const date = crudRecord.expense_date ? new Date(crudRecord.expense_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) : '';
       const catColors = { Food: '#f97316', Transport: '#3b82f6', Shopping: '#8b5cf6', Entertainment: '#ec4899', Utilities: '#14b8a6', Health: '#ef4444', Education: '#f59e0b', Other: '#6b7280' };
       const catColor = catColors[crudRecord.category] || '#10b981';
       recordHtml = `
@@ -224,7 +224,7 @@ function appendAiMessage(text, crudType, crudRecord) {
             <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(crudRecord.title)}</div>
             <div style="font-size:12px;opacity:.6;margin-top:2px;">${escapeHtml(crudRecord.category)} &bull; ${escapeHtml(crudRecord.payment_method || '')} &bull; ${date}</div>
           </div>
-          <div style="font-weight:800;font-size:16px;color:${catColor};white-space:nowrap;">\u20b9${amt}</div>
+          <div style="font-weight:800;font-size:16px;color:${catColor};white-space:nowrap;">${amt}</div>
         </div>
         <div style="margin-top:8px;">
           <a href="/expenses" style="font-size:12px;color:#10b981;font-weight:600;text-decoration:none;">View all expenses \u2192</a>
@@ -433,7 +433,7 @@ function appendReceiptMessage(file, d) {
           <div class="receipt-body">
             <div class="receipt-item"><span class="receipt-item-name">Category</span><span class="receipt-item-price">${escapeHtml(d.category || 'Other')}</span></div>
             <div class="receipt-item"><span class="receipt-item-name">Payment</span><span class="receipt-item-price">${escapeHtml(d.payment_method || 'Cash')}</span></div>
-            <div class="receipt-total"><span>Total Amount</span><span>₹${d.amount || '0.00'}</span></div>
+            <div class="receipt-total"><span>Total Amount</span><span>${formatCurrency(parseFloat(d.amount || 0))}</span></div>
           </div>
           <div class="receipt-actions">
             <button class="btn-save" onclick="confirmReceiptExpense('${id}', ${JSON.stringify(d).replace(/'/g, '&#39;')})">💾 Save Expense</button>
@@ -590,9 +590,10 @@ async function showDashboard() {
   typingEl.remove();
 
   const now = formatTime(new Date());
-  const total = kpiData ? formatCurrency(kpiData.totalExpenses || 0) : '₹0';
-  const budget = kpiData ? formatCurrency(kpiData.totalBudget || 0) : '₹0';
-  const remaining = kpiData ? formatCurrency((kpiData.totalBudget || 0) - (kpiData.totalExpenses || 0)) : '₹0';
+  const sym = (typeof Settings !== 'undefined') ? (Settings.get('currencySymbol') || '$') : '$';
+  const total = kpiData ? formatCurrency(kpiData.totalExpenses || 0) : `${sym}0`;
+  const budget = kpiData ? formatCurrency(kpiData.totalBudget || 0) : `${sym}0`;
+  const remaining = kpiData ? formatCurrency((kpiData.totalBudget || 0) - (kpiData.totalExpenses || 0)) : `${sym}0`;
   const topCat = kpiData ? (kpiData.topCategory || 'N/A') : 'N/A';
 
   const el = document.createElement('div');
@@ -657,7 +658,8 @@ function formatTime(d) {
 }
 
 function formatCurrency(n) {
-  return '₹' + parseFloat(n).toLocaleString('en-IN', { minimumFractionDigits: 0 });
+  if (typeof Settings !== 'undefined') return Settings.formatCurrency(n);
+  return parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
 }
 
 function escapeHtml(t) {

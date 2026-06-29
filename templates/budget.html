@@ -13,21 +13,21 @@
         <div class="kpi-label">Total Budget</div>
         <div class="kpi-icon purple">🎯</div>
       </div>
-      <div class="kpi-value" id="kpiTotalBudget">₹0</div>
+      <div class="kpi-value" id="kpiTotalBudget">—</div>
     </div>
     <div class="kpi-card fade-in stagger-2">
       <div class="kpi-header">
         <div class="kpi-label">Total Spent</div>
         <div class="kpi-icon red">💸</div>
       </div>
-      <div class="kpi-value" id="kpiTotalSpent">₹0</div>
+      <div class="kpi-value" id="kpiTotalSpent">—</div>
     </div>
     <div class="kpi-card fade-in stagger-3">
       <div class="kpi-header">
         <div class="kpi-label">Remaining Budget</div>
         <div class="kpi-icon green">💰</div>
       </div>
-      <div class="kpi-value" id="kpiRemainingBudget">₹0</div>
+      <div class="kpi-value" id="kpiRemainingBudget">—</div>
     </div>
     <div class="kpi-card fade-in stagger-4">
       <div class="kpi-header">
@@ -123,7 +123,7 @@
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Amount ($)</label>
+        <label class="form-label" id="bAmountLabel">Amount</label>
         <input type="number" class="form-input" id="bAmount" required min="1" step="0.01" placeholder="e.g. 100" />
       </div>
       <div style="display: flex; gap: 12px; margin-top: 24px">
@@ -155,6 +155,12 @@
 
   async function fetchBudgetData() {
     if (typeof Auth !== "undefined") await Auth.init();
+
+    // Update amount label to reflect selected currency
+    const sym = Settings.get('currencySymbol') || '$';
+    const lbl = document.getElementById('bAmountLabel');
+    if (lbl) lbl.textContent = `Amount (${sym})`;
+
     const now = new Date();
 
     const [catRes, analyticsRes, warningsRes, historyRes] =
