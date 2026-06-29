@@ -85,9 +85,8 @@ async function sendMessage(overrideText) {
     if (data.success && data.data) {
       const d = data.data;
       appendAiMessage(d.message, d.crud_type || 'none', d.crud_record || null);
-      // Refresh expense list if an expense was mutated
-      if (d.crud_type && d.crud_type !== 'none' && d.crud_record) {
-        dispatchFinanceEvent(d.crud_type, d.crud_record);
+      if (d.crud_type && d.crud_type !== 'none') {
+        dispatchFinanceEvent(d.crud_type, d.crud_record || {});
         refreshExpenseList();
       }
     } else {
@@ -107,7 +106,7 @@ function dispatchFinanceEvent(action, record) {
     window.dispatchEvent(new CustomEvent('ai:finance:changed', {
       detail: { action, record }
     }));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // Refresh any visible expense table/list on the current page
@@ -122,8 +121,8 @@ async function refreshExpenseList() {
 
     // Try to update a visible table body (id="expenseTableBody" or class="expense-list")
     const tableBody = document.getElementById('expenseTableBody') ||
-                      document.querySelector('.expense-table tbody') ||
-                      document.querySelector('[data-expense-list]');
+      document.querySelector('.expense-table tbody') ||
+      document.querySelector('[data-expense-list]');
     if (tableBody && expenses.length) {
       tableBody.innerHTML = expenses.slice(0, 10).map(e => `
         <tr>
@@ -174,9 +173,9 @@ function appendAiMessage(text, crudType, crudRecord) {
 
   // CRUD badge
   const crudBadges = {
-    created: { label: '\u2705 Created',  color: '#10b981' },
-    updated: { label: '\u270f\ufe0f Updated',  color: '#3b82f6' },
-    deleted: { label: '\ud83d\uddd1\ufe0f Deleted',  color: '#ef4444' },
+    created: { label: '\u2705 Created', color: '#10b981' },
+    updated: { label: '\u270f\ufe0f Updated', color: '#3b82f6' },
+    deleted: { label: '\ud83d\uddd1\ufe0f Deleted', color: '#ef4444' },
   };
   const badge = crudBadges[crudType];
   const badgeHtml = badge
@@ -189,7 +188,7 @@ function appendAiMessage(text, crudType, crudRecord) {
 
     // ── BUDGET card ──────────────────────────────────────────────────
     if (crudRecord.type === 'budget') {
-      const fmt = v => parseFloat(v || 0).toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+      const fmt = v => parseFloat(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
       recordHtml = `
         <div style="margin-top:12px;background:var(--glass-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;">
           <div style="font-size:11px;font-weight:700;letter-spacing:.5px;opacity:.5;margin-bottom:10px;text-transform:uppercase;">\uD83D\uDCB0 Budget — ${escapeHtml(crudRecord.month || '')}</div>
@@ -212,18 +211,18 @@ function appendAiMessage(text, crudType, crudRecord) {
           </div>
         </div>`;
 
-    // ── EXPENSE card ─────────────────────────────────────────────────
+      // ── EXPENSE card ─────────────────────────────────────────────────
     } else if (crudRecord.title) {
-      const amt  = parseFloat(crudRecord.amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
-      const date = crudRecord.expense_date ? new Date(crudRecord.expense_date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '';
-      const catColors = {Food:'#f97316',Transport:'#3b82f6',Shopping:'#8b5cf6',Entertainment:'#ec4899',Utilities:'#14b8a6',Health:'#ef4444',Education:'#f59e0b',Other:'#6b7280'};
+      const amt = parseFloat(crudRecord.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+      const date = crudRecord.expense_date ? new Date(crudRecord.expense_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+      const catColors = { Food: '#f97316', Transport: '#3b82f6', Shopping: '#8b5cf6', Entertainment: '#ec4899', Utilities: '#14b8a6', Health: '#ef4444', Education: '#f59e0b', Other: '#6b7280' };
       const catColor = catColors[crudRecord.category] || '#10b981';
       recordHtml = `
         <div style="margin-top:10px;background:var(--glass-bg,rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
           <div style="width:40px;height:40px;border-radius:10px;background:${catColor}22;border:1px solid ${catColor}44;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">\uD83D\uDCB0</div>
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(crudRecord.title)}</div>
-            <div style="font-size:12px;opacity:.6;margin-top:2px;">${escapeHtml(crudRecord.category)} &bull; ${escapeHtml(crudRecord.payment_method||'')} &bull; ${date}</div>
+            <div style="font-size:12px;opacity:.6;margin-top:2px;">${escapeHtml(crudRecord.category)} &bull; ${escapeHtml(crudRecord.payment_method || '')} &bull; ${date}</div>
           </div>
           <div style="font-weight:800;font-size:16px;color:${catColor};white-space:nowrap;">\u20b9${amt}</div>
         </div>
@@ -277,21 +276,21 @@ function buildExpenseCard(d) {
         <div class="expense-field">
           <label>Category</label>
           <select id="${id}_category">
-            ${['Food','Transport','Shopping','Entertainment','Utilities','Health','Education','Other']
-              .map(c => `<option value="${c}" ${c === d.category ? 'selected' : ''}>${c}</option>`).join('')}
+            ${['Food', 'Transport', 'Shopping', 'Entertainment', 'Utilities', 'Health', 'Education', 'Other']
+      .map(c => `<option value="${c}" ${c === d.category ? 'selected' : ''}>${c}</option>`).join('')}
           </select>
         </div>
       </div>
       <div class="expense-field-row">
         <div class="expense-field">
           <label>Date</label>
-          <input type="date" id="${id}_date" value="${(d.expense_date || '').slice(0,10) || today()}">
+          <input type="date" id="${id}_date" value="${(d.expense_date || '').slice(0, 10) || today()}">
         </div>
         <div class="expense-field">
           <label>Payment Method</label>
           <select id="${id}_method">
-            ${['Cash','Credit Card','Debit Card','UPI','Bank Transfer','Auto Pay','Other']
-              .map(m => `<option value="${m}" ${m === d.payment_method ? 'selected' : ''}>${m}</option>`).join('')}
+            ${['Cash', 'Credit Card', 'Debit Card', 'UPI', 'Bank Transfer', 'Auto Pay', 'Other']
+      .map(m => `<option value="${m}" ${m === d.payment_method ? 'selected' : ''}>${m}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -525,7 +524,7 @@ async function processAudio(blob, mimeType) {
   let ext = 'webm';
   if (mimeType && mimeType.includes('mp4')) ext = 'mp4';
   else if (mimeType && mimeType.includes('ogg')) ext = 'ogg';
-  
+
   formData.append('audio', blob, `recording.${ext}`);
 
   try {
@@ -586,7 +585,7 @@ async function showDashboard() {
     const r = await fetch('/api/v1/analytics/kpis');
     const j = await r.json();
     if (j.success) kpiData = j.data;
-  } catch (e) {}
+  } catch (e) { }
 
   typingEl.remove();
 
@@ -662,7 +661,7 @@ function formatCurrency(n) {
 }
 
 function escapeHtml(t) {
-  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function escapeAttr(t) {

@@ -285,12 +285,12 @@ const AppData = {
 const API = {
   async getDashboardData({ startDate, endDate } = {}) {
     if (typeof Auth === 'undefined') return false;
-    
+
     let queryParams = '';
     if (startDate && endDate) {
       queryParams = `?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
     }
-    
+
     // Fetch multiple endpoints simultaneously
     const [kpisRes, expensesRes, categoriesRes, budgetRes] = await Promise.all([
       Auth.apiFetch(`/api/v1/analytics/kpis${queryParams}`),
@@ -351,3 +351,21 @@ function debounce(fn, wait) {
     t = setTimeout(() => fn.apply(this, args), wait);
   };
 }
+
+// Add BroadcastChannel for global sync across tabs/pages
+if (typeof window !== 'undefined' && window.BroadcastChannel) {
+  const financeSyncChannel = new BroadcastChannel('finance_sync');
+
+  financeSyncChannel.onmessage = (event) => {
+    if (event.data && event.data.type === 'REFRESH') {
+      window.dispatchEvent(new CustomEvent('ai:finance:changed', { detail: event.data.detail }));
+    }
+  };
+
+  window.addEventListener('ai:finance:changed', (e) => {
+    if (e.detail && !e.detail.internal) {
+      financeSyncChannel.postMessage({ type: 'REFRESH', detail: { ...e.detail, internal: true } });
+    }
+  });
+}
+
