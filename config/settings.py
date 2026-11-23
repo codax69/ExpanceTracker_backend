@@ -6,17 +6,26 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-expenseiq-dev-key-change-in-production')
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-expenseiq-dev-key-change-in-production'
+    else:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY environment variable is required in production.')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+_raw_allowed_hosts = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '')
+ALLOWED_HOSTS = [h.strip() for h in _raw_allowed_hosts.split(',') if h.strip()]
+if not DEBUG and (not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS):
+    raise ImproperlyConfigured('Explicit, non-wildcard ALLOWED_HOSTS required when DEBUG=False.')
 
 # ── Application definition ──
 INSTALLED_APPS = [
@@ -76,12 +85,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 USE_MYSQL = os.getenv('USE_MYSQL', 'False').lower() in ('true', '1', 'yes')
 
 if USE_MYSQL:
+    mysql_password = os.getenv('MYSQL_PASSWORD')
+    if not mysql_password and not DEBUG:
+        raise ImproperlyConfigured('MYSQL_PASSWORD environment variable is required when USE_MYSQL=True in production.')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.getenv('MYSQL_DATABASE', 'expensetracker'),
             'USER': os.getenv('MYSQL_USER', 'expenseuser'),
-            'PASSWORD': os.getenv('MYSQL_PASSWORD', 'expensepass'),
+            'PASSWORD': mysql_password or 'expensepass',
             'HOST': os.getenv('MYSQL_HOST', 'db'),
             'PORT': os.getenv('MYSQL_PORT', '3306'),
             'OPTIONS': {
@@ -128,9 +140,20 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ── Default auto field ──
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ── CORS ──
+# ── CORS & CSRF ──
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:5500').split(',')
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:5500').split(',')
+    if origin.strip()
+]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+if DEBUG and not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
 CORS_ALLOW_HEADERS = ['accept', 'authorization', 'content-type', 'origin', 'x-requested-with']
 CORS_ALLOW_CREDENTIALS = True  # Required for cookies to be sent cross-origin

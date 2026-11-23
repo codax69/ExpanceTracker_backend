@@ -12,16 +12,19 @@ Django 5 REST API — expense tracking with JWT auth, MySQL, CORS, rate limiting
 ### 1. Configure environment
 ```bash
 # Copy the template and edit your secrets
-cp .env.docker .env.docker.local   # optional — or just edit .env.docker
+cp .env.example .env
 ```
 
-Key variables in `.env.docker`:
+Key variables in `.env`:
 | Variable | Description |
 |---|---|
-| `DJANGO_SECRET_KEY` | Strong random string (change in production!) |
+| `DJANGO_SECRET_KEY` | Strong random string (required in production!) |
+| `DEBUG` | Set `False` for production (`True` for local development) |
+| `ALLOWED_HOSTS` | Comma-separated list of allowed hostnames (e.g. `api.yourdomain.com`) |
 | `MYSQL_PASSWORD` | MySQL app user password |
 | `MYSQL_ROOT_PASSWORD` | MySQL root password |
 | `CORS_ORIGINS` | Comma-separated list of allowed frontend origins |
+| `CSRF_TRUSTED_ORIGINS` | Comma-separated list of trusted origins for CSRF |
 
 ### 2. Start (Production mode — Nginx + Gunicorn + MySQL)
 ```bash

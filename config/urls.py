@@ -21,15 +21,27 @@ _start_time = time.time()
 
 
 def health_check(request):
-    """Health check endpoint matching Node.js format."""
+    """Health check endpoint verifying process and database connectivity."""
     from datetime import datetime
 
+    from django.db import connection
+
+    db_status = "ok"
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception as exc:
+        db_status = f"unhealthy: {exc!s}"
+
+    is_healthy = db_status == "ok"
     return JsonResponse(
         {
-            "status": "ok",
+            "status": "ok" if is_healthy else "error",
+            "database": db_status,
             "timestamp": datetime.now(UTC).isoformat(),
             "uptime": round(time.time() - _start_time, 2),
-        }
+        },
+        status=200 if is_healthy else 503,
     )
 
 
