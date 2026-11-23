@@ -59,6 +59,7 @@ jobs:
           DJANGO_SECRET_KEY: ci-temporary-secret-key-for-checks-only
           DEBUG: "True"
           USE_MYSQL: "False"
+          GROQ_API_KEY: mock-groq-api-key-for-testing
         run: |
           python manage.py check
 
@@ -67,6 +68,7 @@ jobs:
           DJANGO_SECRET_KEY: ci-temporary-secret-key-for-checks-only
           DEBUG: "True"
           USE_MYSQL: "False"
+          GROQ_API_KEY: mock-groq-api-key-for-testing
         run: |
           python manage.py test
 

@@ -17,6 +17,25 @@ class BaseAPITestCase(APITestCase):
     All test classes inherit from this to get pre-populated test data.
     """
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        import os
+        from pathlib import Path
+
+        from django.conf import settings
+        from dotenv import load_dotenv
+
+        base_dir = Path(__file__).resolve().parent.parent.parent
+        load_dotenv(base_dir / ".env")
+
+        import api.views.ai_views
+        import api.views.chat_views
+
+        key = os.getenv("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", "") or "mock-groq-api-key-for-testing"
+        api.views.ai_views.GROQ_API_KEY = key
+        api.views.chat_views.GROQ_API_KEY = key
+
     def setUp(self):
         self.client = APIClient()
         self.now = timezone.now()

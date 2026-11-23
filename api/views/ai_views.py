@@ -19,6 +19,7 @@ import re
 from datetime import datetime
 
 import requests
+from django.conf import settings
 from django.db.models import Sum
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.views import APIView
@@ -34,12 +35,16 @@ from ..utils import ApiResponse
 
 logger = logging.getLogger(__name__)
 
-# ── Config (override via environment variables in production) ────────────────
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")  # Never hardcode in prod!
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-GROQ_API_URL = os.environ.get("GROQ_API_BASE_URL", "https://api.groq.com/openai/v1/chat/completions")
-GROQ_TEMPERATURE = float(os.environ.get("GROQ_TEMPERATURE", "0.3"))  # Low = consistent JSON
-GROQ_MAX_TOKENS = int(os.environ.get("GROQ_MAX_TOKENS", "1024"))
+# ── Config (read from Django settings or environment) ────────────────────────
+GROQ_API_KEY = getattr(settings, "GROQ_API_KEY", "") or os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL = getattr(settings, "GROQ_MODEL", os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"))
+GROQ_API_URL = getattr(
+    settings,
+    "GROQ_API_BASE_URL",
+    os.environ.get("GROQ_API_BASE_URL", "https://api.groq.com/openai/v1/chat/completions"),
+)
+GROQ_TEMPERATURE = float(getattr(settings, "GROQ_TEMPERATURE", os.environ.get("GROQ_TEMPERATURE", "0.3")))
+GROQ_MAX_TOKENS = int(getattr(settings, "GROQ_MAX_TOKENS", os.environ.get("GROQ_MAX_TOKENS", "1024")))
 
 
 # ─────────────────────────────────────────────────────────────────────────────

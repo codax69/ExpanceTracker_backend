@@ -1,7 +1,9 @@
 import json
 import logging
+import os
 
 import requests
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -115,7 +117,8 @@ class MessageListCreateView(APIView):
         if not text and not audio_file and not image_file:
             return ApiResponse.error("Provide 'text', 'audio', or 'image' input.", 400)
 
-        if not GROQ_API_KEY:
+        api_key = getattr(settings, "GROQ_API_KEY", "") or os.environ.get("GROQ_API_KEY", "") or GROQ_API_KEY
+        if not api_key:
             logger.error("GROQ_API_KEY not set in environment.")
             return ApiResponse.error("AI service not configured. Set GROQ_API_KEY.", 503)
 
