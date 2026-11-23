@@ -1,8 +1,14 @@
 """Tests for FCM device registration and privacy boundaries."""
 
-from django.contrib.auth.models import User
+from datetime import timedelta
+from decimal import Decimal
+from unittest.mock import patch
 
-from api.models import DeviceToken
+from django.contrib.auth.models import User
+from django.core.management import call_command
+from django.utils import timezone
+
+from api.models import DeviceToken, Expense, UserSettings
 from api.tests.base import BaseAPITestCase
 
 
@@ -45,16 +51,6 @@ class DeviceTokenTests(BaseAPITestCase):
 
         self.assert_error_response(response, 404)
         self.assertTrue(DeviceToken.objects.filter(pk=device.id).exists())
-
-
-from datetime import timedelta
-from decimal import Decimal
-from unittest.mock import patch
-
-from django.core.management import call_command
-from django.utils import timezone
-
-from api.models import Expense, UserSettings
 
 
 class NotificationServiceAndCommandTests(BaseAPITestCase):
@@ -139,9 +135,9 @@ class NewNotificationTriggerTests(BaseAPITestCase):
             {
                 "currentPassword": "ApiTestPassword123",
                 "newPassword": "NewPassword123!",
-                "confirmPassword": "NewPassword123!"
+                "confirmPassword": "NewPassword123!",
             },
-            format="json"
+            format="json",
         )
         self.assert_success_response(response, 200)
         mock_send.assert_called_with(
@@ -150,7 +146,7 @@ class NewNotificationTriggerTests(BaseAPITestCase):
             title="Password changed",
             body="Your account password was changed successfully.",
             url="/settings/",
-            data=None
+            data=None,
         )
 
     @patch("api.notifications.send_push_notification")
@@ -160,12 +156,7 @@ class NewNotificationTriggerTests(BaseAPITestCase):
 
         with patch("django.db.transaction.on_commit") as mock_on_commit:
             response = self.client.post(
-                "/api/v1/auth/login",
-                {
-                    "identifier": "apitestuser",
-                    "password": "ApiTestPassword123"
-                },
-                format="json"
+                "/api/v1/auth/login", {"identifier": "apitestuser", "password": "ApiTestPassword123"}, format="json"
             )
             self.assert_error_response(response, 403)
             mock_on_commit.assert_called_once()
@@ -179,7 +170,7 @@ class NewNotificationTriggerTests(BaseAPITestCase):
                 self.test_user,
                 event_type="auth_account_disabled",
                 title="Account disabled",
-                body="Your MoneyMatrix account has been disabled."
+                body="Your MoneyMatrix account has been disabled.",
             )
 
     @patch("api.notifications.send_push_notification")
@@ -187,11 +178,8 @@ class NewNotificationTriggerTests(BaseAPITestCase):
         with patch("django.db.transaction.on_commit") as mock_on_commit:
             response = self.client.post(
                 "/api/v1/reports/csv",
-                {
-                    "startDate": "2026-07-01T00:00:00Z",
-                    "endDate": "2026-07-31T23:59:59Z"
-                },
-                format="json"
+                {"startDate": "2026-07-01T00:00:00Z", "endDate": "2026-07-31T23:59:59Z"},
+                format="json",
             )
             self.assertEqual(response.status_code, 200)
             mock_on_commit.assert_called_once()
@@ -207,11 +195,7 @@ class NewNotificationTriggerTests(BaseAPITestCase):
                 title="Csv report generated",
                 body="Your csv report (2026-07-01 – 2026-07-31) is ready.",
                 url="/reports/",
-                data={
-                    "reportType": "csv",
-                    "startDate": "2026-07-01",
-                    "endDate": "2026-07-31"
-                }
+                data={"reportType": "csv", "startDate": "2026-07-01", "endDate": "2026-07-31"},
             )
 
     @patch("api.notifications.send_push_notification")
@@ -241,11 +225,7 @@ class NewNotificationTriggerTests(BaseAPITestCase):
             budget.save()
         else:
             budget = Budget.objects.create(
-                user=self.test_user,
-                month=7,
-                year=2026,
-                total_monthly_budget=Decimal("500.00"),
-                warning_threshold=80
+                user=self.test_user, month=7, year=2026, total_monthly_budget=Decimal("500.00"), warning_threshold=80
             )
 
         expense = Expense.objects.create(
@@ -253,7 +233,7 @@ class NewNotificationTriggerTests(BaseAPITestCase):
             title="Dinner",
             amount=Decimal("300.00"),
             category="Food",
-            expense_date=timezone.make_aware(dt(2026, 7, 15, 12, 0))
+            expense_date=timezone.make_aware(dt(2026, 7, 15, 12, 0)),
         )
 
         notify_budget_status(self.test_user, expense)
@@ -263,5 +243,3 @@ class NewNotificationTriggerTests(BaseAPITestCase):
         calls = [call[1]["event_type"] for call in mock_send_once.call_args_list]
         self.assertIn("large_expense_created", calls)
         self.assertIn("category_budget_exceeded", calls)
-
-

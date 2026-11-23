@@ -2,6 +2,7 @@
 Views for ExpenseIQ API — Category, Budget, Report endpoints.
 Mirrors: /api/v1/categories/*, /api/v1/budget/*, /api/v1/reports/*
 """
+
 import csv
 import io
 from datetime import UTC, datetime, timedelta
@@ -23,33 +24,34 @@ from ..utils import ApiResponse, get_end_of_month, get_pagination_params, get_st
 # ═══════════════════════════════════════════
 class CategoryListCreateView(APIView):
     """GET /api/v1/categories/ — list all categories
-       POST /api/v1/categories/ — create new category"""
+    POST /api/v1/categories/ — create new category"""
 
     def get(self, request):
-        categories = Category.objects.filter(user=request.user).order_by('name')
+        categories = Category.objects.filter(user=request.user).order_by("name")
 
-        is_all = request.query_params.get('all', '').lower() in ('true', '1')
+        is_all = request.query_params.get("all", "").lower() in ("true", "1")
         if is_all:
             serializer = CategorySerializer(categories, many=True)
             return ApiResponse.success(serializer.data)
 
-        offset_param = request.query_params.get('offset')
+        offset_param = request.query_params.get("offset")
         if offset_param is not None:
             try:
                 offset = max(0, int(offset_param))
             except (ValueError, TypeError):
                 offset = 0
             try:
-                limit = int(request.query_params.get('limit', 20))
+                limit = int(request.query_params.get("limit", 20))
             except (ValueError, TypeError):
                 limit = 20
-            
+
             from django.conf import settings
-            max_limit = getattr(settings, 'PAGINATION_MAX_LIMIT', 100)
+
+            max_limit = getattr(settings, "PAGINATION_MAX_LIMIT", 100)
             limit = max(1, min(limit, max_limit))
-            
+
             total = categories.count()
-            paginated = categories[offset:offset + limit]
+            paginated = categories[offset : offset + limit]
             page = (offset // limit) + 1 if limit > 0 else 1
             serializer = CategorySerializer(paginated, many=True)
             return ApiResponse.paginated(serializer.data, page, limit, total)
@@ -58,15 +60,15 @@ class CategoryListCreateView(APIView):
         page, limit = get_pagination_params(request.query_params)
         total = categories.count()
         offset = (page - 1) * limit
-        paginated = categories[offset:offset + limit]
+        paginated = categories[offset : offset + limit]
 
         serializer = CategorySerializer(paginated, many=True)
         return ApiResponse.paginated(serializer.data, page, limit, total)
 
     def post(self, request):
-        name = request.data.get('name', '').strip()
+        name = request.data.get("name", "").strip()
         if Category.objects.filter(user=request.user, name__iexact=name).exists():
-            return ApiResponse.error('Category already exists', 409)
+            return ApiResponse.error("Category already exists", 409)
 
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
@@ -74,11 +76,8 @@ class CategoryListCreateView(APIView):
             from ..notifications import notify_category_created
 
             notify_category_created(request.user, cat.name)
-            return ApiResponse.created(
-                CategorySerializer(cat).data,
-                message='Category created'
-            )
-        return ApiResponse.error('Validation failed', 400, serializer.errors)
+            return ApiResponse.created(CategorySerializer(cat).data, message="Category created")
+        return ApiResponse.error("Validation failed", 400, serializer.errors)
 
 
 class CategoryDetailView(APIView):
@@ -88,28 +87,25 @@ class CategoryDetailView(APIView):
         try:
             cat = Category.objects.get(pk=pk, user=request.user)
         except Category.DoesNotExist:
-            return ApiResponse.error('Category not found', 404)
+            return ApiResponse.error("Category not found", 404)
 
         serializer = CategorySerializer(cat, data=request.data, partial=True)
         if serializer.is_valid():
             cat = serializer.save()
-            return ApiResponse.success(
-                CategorySerializer(cat).data,
-                message='Category updated'
-            )
-        return ApiResponse.error('Validation failed', 400, serializer.errors)
+            return ApiResponse.success(CategorySerializer(cat).data, message="Category updated")
+        return ApiResponse.error("Validation failed", 400, serializer.errors)
 
     def delete(self, request, pk):
         try:
             cat = Category.objects.get(pk=pk, user=request.user)
         except Category.DoesNotExist:
-            return ApiResponse.error('Category not found', 404)
+            return ApiResponse.error("Category not found", 404)
         cat_name = cat.name
         cat.delete()
         from ..notifications import notify_category_deleted
 
         notify_category_deleted(request.user, cat_name)
-        return ApiResponse.success(message='Category deleted')
+        return ApiResponse.success(message="Category deleted")
 
 
 # ═══════════════════════════════════════════
@@ -119,16 +115,16 @@ class BudgetView(APIView):
     """GET/POST /api/v1/budget — get or set/update monthly budget"""
 
     def get(self, request):
-        month = request.query_params.get('month')
-        year = request.query_params.get('year')
+        month = request.query_params.get("month")
+        year = request.query_params.get("year")
 
         if not month or not year:
-            return ApiResponse.error('month and year query params are required', 400)
+            return ApiResponse.error("month and year query params are required", 400)
 
         try:
             budget = Budget.objects.get(user=request.user, month=int(month), year=int(year))
         except Budget.DoesNotExist:
-            return ApiResponse.error('Budget not found', 404)
+            return ApiResponse.error("Budget not found", 404)
 
         # Calculate current spending for the month
         start = datetime(int(year), int(month), 1, tzinfo=UTC)
@@ -137,67 +133,70 @@ class BudgetView(APIView):
         else:
             end = datetime(int(year), int(month) + 1, 1, tzinfo=UTC)
 
-        current_spent = Expense.objects.filter(
-            user=request.user,
-            expense_date__gte=start, expense_date__lt=end
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        current_spent = (
+            Expense.objects.filter(user=request.user, expense_date__gte=start, expense_date__lt=end).aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
+        )
         current_spent = float(current_spent)
         budget_total = float(budget.total_monthly_budget)
 
         data = BudgetSerializer(budget).data
-        data['currentSpent'] = current_spent
-        data['remainingAmount'] = budget_total - current_spent
-        data['usagePercent'] = round((current_spent / budget_total * 100), 2) if budget_total > 0 else 0
-        data['isWarning'] = (current_spent / budget_total * 100) >= budget.warning_threshold if budget_total > 0 else False
+        data["currentSpent"] = current_spent
+        data["remainingAmount"] = budget_total - current_spent
+        data["usagePercent"] = round((current_spent / budget_total * 100), 2) if budget_total > 0 else 0
+        data["isWarning"] = (
+            (current_spent / budget_total * 100) >= budget.warning_threshold if budget_total > 0 else False
+        )
 
         return ApiResponse.success(data)
 
     def post(self, request):
-        month = request.data.get('month')
-        year = request.data.get('year')
+        month = request.data.get("month")
+        year = request.data.get("year")
 
         if not month or not year:
-            return ApiResponse.error('month and year are required', 400)
+            return ApiResponse.error("month and year are required", 400)
 
         existing = Budget.objects.filter(user=request.user, month=int(month), year=int(year)).first()
 
-        total = request.data.get('totalMonthlyBudget')
+        total = request.data.get("totalMonthlyBudget")
         if total is None:
             total = existing.total_monthly_budget if existing else 0
 
-        threshold = request.data.get('warningThreshold')
+        threshold = request.data.get("warningThreshold")
         if threshold is None:
             threshold = existing.warning_threshold if existing else 80
 
-        daily = request.data.get('dailyBudget')
+        daily = request.data.get("dailyBudget")
         if daily is None:
             daily = existing.daily_budget if existing else 0
 
-        weekly = request.data.get('weeklyBudget')
+        weekly = request.data.get("weeklyBudget")
         if weekly is None:
             weekly = existing.weekly_budget if existing else 0
 
-        yearly = request.data.get('yearlyBudget')
+        yearly = request.data.get("yearlyBudget")
         if yearly is None:
             yearly = existing.yearly_budget if existing else 0
 
         budget, _ = Budget.objects.update_or_create(
-            user=request.user, month=int(month), year=int(year),
+            user=request.user,
+            month=int(month),
+            year=int(year),
             defaults={
-                'total_monthly_budget': total,
-                'warning_threshold': threshold,
-                'daily_budget': daily,
-                'weekly_budget': weekly,
-                'yearly_budget': yearly,
-            }
+                "total_monthly_budget": total,
+                "warning_threshold": threshold,
+                "daily_budget": daily,
+                "weekly_budget": weekly,
+                "yearly_budget": yearly,
+            },
         )
         from ..notifications import notify_budget_set
 
         notify_budget_set(request.user, int(month), int(year), str(total))
-        return ApiResponse.success(
-            BudgetSerializer(budget).data,
-            message='Budget set successfully'
-        )
+        return ApiResponse.success(BudgetSerializer(budget).data, message="Budget set successfully")
 
 
 # Backward compatibility aliases
@@ -211,10 +210,10 @@ class BudgetGetAllView(APIView):
     def get(self, request):
         page, limit = get_pagination_params(request.query_params)
 
-        budgets = Budget.objects.filter(user=request.user).order_by('-year', '-month')
+        budgets = Budget.objects.filter(user=request.user).order_by("-year", "-month")
         total = budgets.count()
         offset = (page - 1) * limit
-        paginated = budgets[offset:offset + limit]
+        paginated = budgets[offset : offset + limit]
 
         serializer = BudgetSerializer(paginated, many=True)
         return ApiResponse.paginated(serializer.data, page, limit, total)
@@ -228,27 +227,29 @@ class BudgetWarningsView(APIView):
         try:
             budget = Budget.objects.get(user=request.user, month=now.month, year=now.year)
         except Budget.DoesNotExist:
-            return ApiResponse.success({'warning': False, 'message': 'No budget set for current month'})
+            return ApiResponse.success({"warning": False, "message": "No budget set for current month"})
 
         start = get_start_of_month(now)
         end = get_end_of_month(now)
         spent = float(
-            Expense.objects.filter(
-                user=request.user,
-                expense_date__gte=start, expense_date__lte=end
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            Expense.objects.filter(user=request.user, expense_date__gte=start, expense_date__lte=end).aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
         )
         budget_total = float(budget.total_monthly_budget)
         usage = (spent / budget_total * 100) if budget_total > 0 else 0
 
-        return ApiResponse.success({
-            'warning': usage >= budget.warning_threshold,
-            'usage': round(usage, 2),
-            'spent': spent,
-            'budget': budget_total,
-            'remaining': budget_total - spent,
-            'threshold': budget.warning_threshold,
-        })
+        return ApiResponse.success(
+            {
+                "warning": usage >= budget.warning_threshold,
+                "usage": round(usage, 2),
+                "spent": spent,
+                "budget": budget_total,
+                "remaining": budget_total - spent,
+                "threshold": budget.warning_threshold,
+            }
+        )
 
 
 # ═══════════════════════════════════════════
@@ -258,56 +259,57 @@ class ReportCSVView(APIView):
     """POST /api/v1/reports/csv — generate and download CSV report"""
 
     def post(self, request):
-        start_date = request.data.get('startDate')
-        end_date = request.data.get('endDate')
+        start_date = request.data.get("startDate")
+        end_date = request.data.get("endDate")
 
         if not start_date or not end_date:
-            return ApiResponse.error('startDate and endDate are required', 400)
+            return ApiResponse.error("startDate and endDate are required", 400)
 
-        start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-        end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
 
-        expenses = Expense.objects.filter(
-            user=request.user,
-            expense_date__gte=start, expense_date__lte=end
-        ).order_by('-expense_date')
+        expenses = Expense.objects.filter(user=request.user, expense_date__gte=start, expense_date__lte=end).order_by(
+            "-expense_date"
+        )
 
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['Title', 'Amount', 'Category', 'Payment Method', 'Date', 'Notes'])
+        writer.writerow(["Title", "Amount", "Category", "Payment Method", "Date", "Notes"])
 
         for e in expenses:
-            writer.writerow([
-                e.title,
-                float(e.amount),
-                e.category,
-                e.payment_method,
-                e.expense_date.strftime('%Y-%m-%d'),
-                e.notes,
-            ])
+            writer.writerow(
+                [
+                    e.title,
+                    float(e.amount),
+                    e.category,
+                    e.payment_method,
+                    e.expense_date.strftime("%Y-%m-%d"),
+                    e.notes,
+                ]
+            )
 
         # Save report record
-        total_expense = float(expenses.aggregate(total=Sum('amount'))['total'] or 0)
+        total_expense = float(expenses.aggregate(total=Sum("amount"))["total"] or 0)
         Report.objects.create(
             user=request.user,
-            type='custom',
+            type="custom",
             start_date=start,
             end_date=end,
-            format='csv',
+            format="csv",
             total_expense=total_expense,
         )
 
         try:
             from django.db import transaction
+
             from ..notifications import notify_report_generated
-            transaction.on_commit(
-                lambda: notify_report_generated(request.user, "csv", start, end)
-            )
+
+            transaction.on_commit(lambda: notify_report_generated(request.user, "csv", start, end))
         except Exception:
             pass
 
-        response = HttpResponse(output.getvalue(), content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=expenses_report.csv'
+        response = HttpResponse(output.getvalue(), content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=expenses_report.csv"
         return response
 
 
@@ -315,29 +317,24 @@ class ReportPDFView(APIView):
     """POST /api/v1/reports/pdf — generate and download PDF report"""
 
     def post(self, request):
-        start_date = request.data.get('startDate')
-        end_date = request.data.get('endDate')
+        start_date = request.data.get("startDate")
+        end_date = request.data.get("endDate")
 
         if not start_date or not end_date:
-            return ApiResponse.error('startDate and endDate are required', 400)
+            return ApiResponse.error("startDate and endDate are required", 400)
 
-        start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-        end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+        end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
 
-        expenses = Expense.objects.filter(
-            user=request.user,
-            expense_date__gte=start, expense_date__lte=end
-        ).order_by('-expense_date')
+        expenses = Expense.objects.filter(user=request.user, expense_date__gte=start, expense_date__lte=end).order_by(
+            "-expense_date"
+        )
 
-        total_expense = float(expenses.aggregate(total=Sum('amount'))['total'] or 0)
+        total_expense = float(expenses.aggregate(total=Sum("amount"))["total"] or 0)
         expense_count = expenses.count()
 
         # Category breakdown
-        category_data = (
-            expenses.values('category')
-            .annotate(total=Sum('amount'), count=Count('id'))
-            .order_by('-total')
-        )
+        category_data = expenses.values("category").annotate(total=Sum("amount"), count=Count("id")).order_by("-total")
 
         # Generate PDF using ReportLab
         from reportlab.lib.pagesizes import A4
@@ -348,32 +345,29 @@ class ReportPDFView(APIView):
         width, height = A4
 
         # Title
-        c.setFont('Helvetica-Bold', 22)
-        c.drawCentredString(width / 2, height - 50, 'MoneyMatrix Financial Report')
-        c.setFont('Helvetica', 11)
+        c.setFont("Helvetica-Bold", 22)
+        c.drawCentredString(width / 2, height - 50, "MoneyMatrix Financial Report")
+        c.setFont("Helvetica", 11)
         c.setFillColorRGB(0.4, 0.4, 0.4)
-        c.drawCentredString(
-            width / 2, height - 70,
-            f"{start.strftime('%Y-%m-%d')} to {end.strftime('%Y-%m-%d')}"
-        )
+        c.drawCentredString(width / 2, height - 70, f"{start.strftime('%Y-%m-%d')} to {end.strftime('%Y-%m-%d')}")
 
         # Summary
         y = height - 110
         c.setFillColorRGB(0, 0, 0)
-        c.setFont('Helvetica-Bold', 14)
-        c.drawString(50, y, 'Summary')
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, y, "Summary")
         y -= 25
-        c.setFont('Helvetica', 11)
-        c.drawString(50, y, f'Total Expenses: ${total_expense:,.0f}')
+        c.setFont("Helvetica", 11)
+        c.drawString(50, y, f"Total Expenses: ${total_expense:,.0f}")
         y -= 18
-        c.drawString(50, y, f'Transactions: {expense_count}')
+        c.drawString(50, y, f"Transactions: {expense_count}")
 
         # Category breakdown
         y -= 35
-        c.setFont('Helvetica-Bold', 14)
-        c.drawString(50, y, 'Spending by Category')
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, y, "Spending by Category")
         y -= 25
-        c.setFont('Helvetica', 10)
+        c.setFont("Helvetica", 10)
         for cat in category_data:
             c.drawString(50, y, f"{cat['category']}: ${float(cat['total']):,.0f} ({cat['count']} transactions)")
             y -= 16
@@ -383,14 +377,13 @@ class ReportPDFView(APIView):
 
         # Expense Details
         y -= 25
-        c.setFont('Helvetica-Bold', 14)
-        c.drawString(50, y, 'Expense Details')
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, y, "Expense Details")
         y -= 25
-        c.setFont('Helvetica', 9)
+        c.setFont("Helvetica", 9)
         for e in expenses[:50]:
             c.drawString(
-                50, y,
-                f"{e.expense_date.strftime('%Y-%m-%d')}  |  {e.title}  |  ${float(e.amount)}  |  {e.category}"
+                50, y, f"{e.expense_date.strftime('%Y-%m-%d')}  |  {e.title}  |  ${float(e.amount)}  |  {e.category}"
             )
             y -= 14
             if y < 50:
@@ -399,32 +392,32 @@ class ReportPDFView(APIView):
 
         if expenses.count() > 50:
             y -= 10
-            c.drawString(50, y, f'... and {expenses.count() - 50} more transactions')
+            c.drawString(50, y, f"... and {expenses.count() - 50} more transactions")
 
         c.save()
 
         # Save report record
         Report.objects.create(
             user=request.user,
-            type='custom',
+            type="custom",
             start_date=start,
             end_date=end,
-            format='pdf',
+            format="pdf",
             total_expense=total_expense,
         )
 
         try:
             from django.db import transaction
+
             from ..notifications import notify_report_generated
-            transaction.on_commit(
-                lambda: notify_report_generated(request.user, "pdf", start, end)
-            )
+
+            transaction.on_commit(lambda: notify_report_generated(request.user, "pdf", start, end))
         except Exception:
             pass
 
         buffer.seek(0)
-        response = HttpResponse(buffer.read(), content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename=financial_report.pdf'
+        response = HttpResponse(buffer.read(), content_type="application/pdf")
+        response["Content-Disposition"] = "attachment; filename=financial_report.pdf"
         return response
 
 
@@ -434,10 +427,10 @@ class ReportHistoryView(APIView):
     def get(self, request):
         page, limit = get_pagination_params(request.query_params)
 
-        queryset = Report.objects.filter(user=request.user).order_by('-created_at')
+        queryset = Report.objects.filter(user=request.user).order_by("-created_at")
         total = queryset.count()
         offset = (page - 1) * limit
-        reports = queryset[offset:offset + limit]
+        reports = queryset[offset : offset + limit]
 
         serializer = ReportSerializer(reports, many=True)
         return ApiResponse.paginated(serializer.data, page, limit, total)
@@ -447,19 +440,17 @@ class UserSettingsView(APIView):
     """GET/PUT /api/v1/settings"""
 
     def get(self, request):
-        settings, created = UserSettings.objects.get_or_create(user=request.user)
+        settings, _created = UserSettings.objects.get_or_create(user=request.user)
         serializer = UserSettingsSerializer(settings)
         return ApiResponse.success(serializer.data)
 
     def put(self, request):
-        settings, created = UserSettings.objects.get_or_create(user=request.user)
+        settings, _created = UserSettings.objects.get_or_create(user=request.user)
         serializer = UserSettingsSerializer(settings, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return ApiResponse.success(serializer.data, message='Settings updated successfully')
-        return ApiResponse.error('Validation failed', 400, serializer.errors)
-
-
+            return ApiResponse.success(serializer.data, message="Settings updated successfully")
+        return ApiResponse.error("Validation failed", 400, serializer.errors)
 
 
 class NotificationAlertsView(APIView):
@@ -475,97 +466,103 @@ class NotificationAlertsView(APIView):
             start = get_start_of_month(now)
             end = get_end_of_month(now)
             spent = float(
-                Expense.objects.filter(
-                    user=request.user,
-                    expense_date__gte=start, expense_date__lte=end
-                ).aggregate(total=Sum('amount'))['total'] or 0
+                Expense.objects.filter(user=request.user, expense_date__gte=start, expense_date__lte=end).aggregate(
+                    total=Sum("amount")
+                )["total"]
+                or 0
             )
             budget_total = float(budget.total_monthly_budget)
             if budget_total > 0:
                 usage = (spent / budget_total) * 100
                 if usage >= 100:
-                    alerts.append({
-                        'id': 'budget_over',
-                        'type': 'danger',
-                        'icon': 'ph-warning-circle',
-                        'title': 'Budget Exceeded!',
-                        'message': f'You have spent {round(usage, 1)}% of your monthly budget.',
-                        'time': 'This month',
-                    })
+                    alerts.append(
+                        {
+                            "id": "budget_over",
+                            "type": "danger",
+                            "icon": "ph-warning-circle",
+                            "title": "Budget Exceeded!",
+                            "message": f"You have spent {round(usage, 1)}% of your monthly budget.",
+                            "time": "This month",
+                        }
+                    )
                 elif usage >= budget.warning_threshold:
-                    alerts.append({
-                        'id': 'budget_warning',
-                        'type': 'warning',
-                        'icon': 'ph-warning',
-                        'title': 'Budget Warning',
-                        'message': f'You have used {round(usage, 1)}% of your monthly budget.',
-                        'time': 'This month',
-                    })
+                    alerts.append(
+                        {
+                            "id": "budget_warning",
+                            "type": "warning",
+                            "icon": "ph-warning",
+                            "title": "Budget Warning",
+                            "message": f"You have used {round(usage, 1)}% of your monthly budget.",
+                            "time": "This month",
+                        }
+                    )
         except Budget.DoesNotExist:
-            alerts.append({
-                'id': 'no_budget',
-                'type': 'info',
-                'icon': 'ph-info',
-                'title': 'No Budget Set',
-                'message': 'Set a monthly budget to track your spending limits.',
-                'time': 'Tip',
-            })
+            alerts.append(
+                {
+                    "id": "no_budget",
+                    "type": "info",
+                    "icon": "ph-info",
+                    "title": "No Budget Set",
+                    "message": "Set a monthly budget to track your spending limits.",
+                    "time": "Tip",
+                }
+            )
 
         # 2. Large expense alert — any single expense > 5000 in last 7 days
         seven_days_ago = now - timedelta(days=7)
         large_expenses = Expense.objects.filter(
-            user=request.user,
-            expense_date__gte=seven_days_ago,
-            amount__gte=5000
-        ).order_by('-amount')[:3]
+            user=request.user, expense_date__gte=seven_days_ago, amount__gte=5000
+        ).order_by("-amount")[:3]
         for exp in large_expenses:
-            alerts.append({
-                'id': f'large_exp_{exp.id}',
-                'type': 'warning',
-                'icon': 'ph-currency-circle-dollar',
-                'title': 'Large Expense Detected',
-                'message': f'"{exp.title}" — {float(exp.amount):,.0f} on {exp.expense_date.strftime("%b %d")}.',
-                'time': exp.expense_date.strftime('%b %d'),
-            })
+            alerts.append(
+                {
+                    "id": f"large_exp_{exp.id}",
+                    "type": "warning",
+                    "icon": "ph-currency-circle-dollar",
+                    "title": "Large Expense Detected",
+                    "message": f'"{exp.title}" — {float(exp.amount):,.0f} on {exp.expense_date.strftime("%b %d")}.',
+                    "time": exp.expense_date.strftime("%b %d"),
+                }
+            )
 
         # 3. Overdue recurring expenses
         from ..models import RecurringExpense
+
         overdue = RecurringExpense.objects.filter(
-            user=request.user,
-            is_active=True,
-            next_due_date__lt=now.date()
-        ).order_by('next_due_date')[:3]
+            user=request.user, is_active=True, next_due_date__lt=now.date()
+        ).order_by("next_due_date")[:3]
         for rec in overdue:
-            alerts.append({
-                'id': f'overdue_rec_{rec.id}',
-                'type': 'danger',
-                'icon': 'ph-clock-countdown',
-                'title': 'Recurring Expense Overdue',
-                'message': f'"{rec.title}" was due on {rec.next_due_date.strftime("%b %d")}.',
-                'time': rec.next_due_date.strftime('%b %d'),
-            })
+            alerts.append(
+                {
+                    "id": f"overdue_rec_{rec.id}",
+                    "type": "danger",
+                    "icon": "ph-clock-countdown",
+                    "title": "Recurring Expense Overdue",
+                    "message": f'"{rec.title}" was due on {rec.next_due_date.strftime("%b %d")}.',
+                    "time": rec.next_due_date.strftime("%b %d"),
+                }
+            )
 
         # 4. Upcoming recurring expenses (due in next 3 days)
         three_days_later = now.date() + timedelta(days=3)
         upcoming = RecurringExpense.objects.filter(
-            user=request.user,
-            is_active=True,
-            next_due_date__gte=now.date(),
-            next_due_date__lte=three_days_later
-        ).order_by('next_due_date')[:3]
+            user=request.user, is_active=True, next_due_date__gte=now.date(), next_due_date__lte=three_days_later
+        ).order_by("next_due_date")[:3]
         for rec in upcoming:
             days_left = (rec.next_due_date - now.date()).days
-            due_label = 'Today' if days_left == 0 else ('Tomorrow' if days_left == 1 else f'In {days_left} days')
-            alerts.append({
-                'id': f'upcoming_rec_{rec.id}',
-                'type': 'info',
-                'icon': 'ph-calendar-check',
-                'title': 'Upcoming Recurring',
-                'message': f'"{rec.title}" is due {due_label} ({float(rec.amount):,.0f}).',
-                'time': due_label,
-            })
+            due_label = "Today" if days_left == 0 else ("Tomorrow" if days_left == 1 else f"In {days_left} days")
+            alerts.append(
+                {
+                    "id": f"upcoming_rec_{rec.id}",
+                    "type": "info",
+                    "icon": "ph-calendar-check",
+                    "title": "Upcoming Recurring",
+                    "message": f'"{rec.title}" is due {due_label} ({float(rec.amount):,.0f}).',
+                    "time": due_label,
+                }
+            )
 
-        return ApiResponse.success({'alerts': alerts, 'count': len(alerts)})
+        return ApiResponse.success({"alerts": alerts, "count": len(alerts)})
 
 
 @login_required
@@ -574,13 +571,13 @@ def index_view(request):
     now = timezone.now()
 
     # Query categories
-    categories = Category.objects.filter(user=request.user).order_by('name')
+    categories = Category.objects.filter(user=request.user).order_by("name")
     categories_map = {c.name: c.icon for c in categories}
 
     # Query recent expenses
-    recent_expenses = Expense.objects.filter(user=request.user).order_by('-expense_date')[:7]
+    recent_expenses = Expense.objects.filter(user=request.user).order_by("-expense_date")[:7]
     for e in recent_expenses:
-        e.category_icon = categories_map.get(e.category, 'ph-package')
+        e.category_icon = categories_map.get(e.category, "ph-package")
 
     # Query budget warnings/info for current month
     budget_info = None
@@ -589,25 +586,25 @@ def index_view(request):
         start = get_start_of_month(now)
         end = get_end_of_month(now)
         spent = float(
-            Expense.objects.filter(
-                user=request.user,
-                expense_date__gte=start, expense_date__lte=end
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            Expense.objects.filter(user=request.user, expense_date__gte=start, expense_date__lte=end).aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
         )
         budget_total = float(budget.total_monthly_budget)
         usage = (spent / budget_total * 100) if budget_total > 0 else 0
         budget_info = {
-            'budget': budget_total,
-            'spent': spent,
-            'remaining': budget_total - spent,
-            'usage': round(usage, 2),
-            'threshold': budget.warning_threshold,
-            'warning': usage >= budget.warning_threshold,
+            "budget": budget_total,
+            "spent": spent,
+            "remaining": budget_total - spent,
+            "usage": round(usage, 2),
+            "threshold": budget.warning_threshold,
+            "warning": usage >= budget.warning_threshold,
         }
 
     context = {
-        'categories': categories,
-        'recent_expenses': recent_expenses,
-        'budget_info': budget_info,
+        "categories": categories,
+        "recent_expenses": recent_expenses,
+        "budget_info": budget_info,
     }
-    return render(request, 'index.html', context)
+    return render(request, "index.html", context)

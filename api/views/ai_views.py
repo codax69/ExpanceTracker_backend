@@ -35,16 +35,17 @@ from ..utils import ApiResponse
 logger = logging.getLogger(__name__)
 
 # ── Config (override via environment variables in production) ────────────────
-GROQ_API_KEY      = os.environ.get("GROQ_API_KEY", "")          # Never hardcode in prod!
-GROQ_MODEL        = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-GROQ_API_URL      = os.environ.get("GROQ_API_BASE_URL", "https://api.groq.com/openai/v1/chat/completions")
-GROQ_TEMPERATURE  = float(os.environ.get("GROQ_TEMPERATURE", "0.3"))   # Low = consistent JSON
-GROQ_MAX_TOKENS   = int(os.environ.get("GROQ_MAX_TOKENS", "1024"))
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")  # Never hardcode in prod!
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_API_URL = os.environ.get("GROQ_API_BASE_URL", "https://api.groq.com/openai/v1/chat/completions")
+GROQ_TEMPERATURE = float(os.environ.get("GROQ_TEMPERATURE", "0.3"))  # Low = consistent JSON
+GROQ_MAX_TOKENS = int(os.environ.get("GROQ_MAX_TOKENS", "1024"))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _to_float(value, default: float = 0.0) -> float:
     """
@@ -103,6 +104,7 @@ def _strip_json_fences(text: str) -> str:
 # USER CONTEXT BUILDER — injects live DB snapshot into AI system prompt
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _build_user_context(user) -> str:
     """
     Returns a compact, token-efficient financial snapshot for the AI prompt.
@@ -142,13 +144,10 @@ def _build_user_context(user) -> str:
     # ── Last month comparison ─────────────────────────────────────────
     lm, ly = (m - 1, y) if m > 1 else (12, y - 1)
     lm_total = (
-        Expense.objects.filter(user=user, expense_date__month=lm, expense_date__year=ly)
-        .aggregate(t=Sum("amount"))["t"]
+        Expense.objects.filter(user=user, expense_date__month=lm, expense_date__year=ly).aggregate(t=Sum("amount"))["t"]
         or 0
     )
-    change_pct = (
-        ((float(month_total) - float(lm_total)) / float(lm_total) * 100) if lm_total else 0
-    )
+    change_pct = ((float(month_total) - float(lm_total)) / float(lm_total) * 100) if lm_total else 0
     trend_dir = "up" if change_pct > 0 else ("down" if change_pct < 0 else "same")
     parts.append(f"[LAST_MONTH:₹{lm_total:.0f}|vs_now:{trend_dir}{abs(change_pct):.0f}%]")
 
@@ -158,23 +157,22 @@ def _build_user_context(user) -> str:
         tm = (m - delta - 1) % 12 + 1
         ty = y - ((m - delta - 1) // 12)
         t_total = (
-            Expense.objects.filter(user=user, expense_date__month=tm, expense_date__year=ty)
-            .aggregate(t=Sum("amount"))["t"]
+            Expense.objects.filter(user=user, expense_date__month=tm, expense_date__year=ty).aggregate(t=Sum("amount"))[
+                "t"
+            ]
             or 0
         )
         trend.append(f"{datetime(ty, tm, 1).strftime('%b')}:₹{t_total:.0f}")
     parts.append(f"[3M_TREND:{','.join(trend)}]")
 
     # ── Recurring expenses ────────────────────────────────────────────
-    recurring = Expense.objects.filter(
-        user=user, is_recurring=True
-    ).exclude(
-        recurring_type__in=["daily", "weekly"]
-    ).order_by("-expense_date")[:8]
+    recurring = (
+        Expense.objects.filter(user=user, is_recurring=True)
+        .exclude(recurring_type__in=["daily", "weekly"])
+        .order_by("-expense_date")[:8]
+    )
     if recurring.exists():
-        rec_str = ",".join(
-            f"{e.title[:15]}:₹{e.amount}({e.recurring_type or 'monthly'})" for e in recurring
-        )
+        rec_str = ",".join(f"{e.title[:15]}:₹{e.amount}({e.recurring_type or 'monthly'})" for e in recurring)
         parts.append(f"[RECURRING:{rec_str}]")
 
     # ── Budget health ─────────────────────────────────────────────────
@@ -211,8 +209,7 @@ def _build_user_context(user) -> str:
         all_cats = Category.objects.filter(user=user).order_by("name")
         if all_cats.exists():
             cat_list = ",".join(
-                f"{c.name}(icon:{c.icon},color:{c.color},budget:₹{c.monthly_budget:.0f})"
-                for c in all_cats
+                f"{c.name}(icon:{c.icon},color:{c.color},budget:₹{c.monthly_budget:.0f})" for c in all_cats
             )
             parts.append(f"[CATEGORIES:{cat_list}]")
         else:
@@ -223,6 +220,7 @@ def _build_user_context(user) -> str:
     # ── User theme ────────────────────────────────────────────────────
     try:
         from ..models import UserSettings
+
         us = UserSettings.objects.filter(user=user).first()
         if us:
             parts.append(f"[THEME:{us.theme}]")
@@ -236,6 +234,7 @@ def _build_user_context(user) -> str:
 # CRUD EXECUTOR
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _execute_crud(user, intent: str, data: dict) -> dict:
     """
     Executes DB operations based on AI-parsed intent + data.
@@ -247,7 +246,9 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
         if crud_type in ["created", "updated", "deleted"]:
             try:
                 from django.db import transaction
+
                 from api.notifications import send_push_notification
+
                 action_word = crud_type
 
                 def deferred_send():
@@ -258,7 +259,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                             title="AI Assistant Action",
                             body=f"The AI assistant successfully performed a {action_word} action.",
                             url="/",
-                            data={"crudType": crud_type}
+                            data={"crudType": crud_type},
                         )
                     except Exception:
                         pass
@@ -272,7 +273,6 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
         return {"message": msg, "crud_type": "none", "crud_record": None, "ok": False}
 
     try:
-
         # ── ADD EXPENSE ───────────────────────────────────────────────
         if intent == "add_expense":
             is_recurring = data.get("is_recurring", False)
@@ -284,7 +284,9 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
             rec_type = (data.get("recurring_type") or "").strip().lower()
             if (is_recur_bool or rec_type) and rec_type in ["daily", "weekly"]:
-                return err("❌ I can only manage recurring expenses with Monthly, Quarterly, or Yearly recurrence. Please add daily or weekly recurring expenses manually.")
+                return err(
+                    "❌ I can only manage recurring expenses with Monthly, Quarterly, or Yearly recurrence. Please add daily or weekly recurring expenses manually."
+                )
 
             raw_date = data.get("expense_date")
             try:
@@ -293,13 +295,13 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                 exp_date = datetime.now()
 
             payload = {
-                "title":         data.get("title", "Expense"),
-                "amount":        _to_float(data.get("amount"), 0),
-                "category":      data.get("category", "Other"),
+                "title": data.get("title", "Expense"),
+                "amount": _to_float(data.get("amount"), 0),
+                "category": data.get("category", "Other"),
                 "paymentMethod": data.get("payment_method", "Cash"),
-                "notes":         data.get("notes", ""),
-                "expenseDate":   exp_date.isoformat(),
-                "isRecurring":   is_recur_bool,
+                "notes": data.get("notes", ""),
+                "expenseDate": exp_date.isoformat(),
+                "isRecurring": is_recur_bool,
                 "recurringType": data.get("recurring_type"),
             }
             ser = ExpenseSerializer(data=payload)
@@ -307,9 +309,12 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                 return err(f"❌ Validation failed: {ser.errors}")
             e = ser.save(user=user)
             record = {
-                "id": e.id, "_id": str(e.id),
-                "title": e.title, "amount": float(e.amount),
-                "category": e.category, "payment_method": e.payment_method,
+                "id": e.id,
+                "_id": str(e.id),
+                "title": e.title,
+                "amount": float(e.amount),
+                "category": e.category,
+                "payment_method": e.payment_method,
                 "expense_date": e.expense_date.isoformat(),
             }
             if e.is_recurring:
@@ -333,9 +338,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                     pass
             # Fallback to title search
             if not e and search:
-                qs = Expense.objects.filter(
-                    user=user, title__icontains=search
-                ).order_by("-expense_date")
+                qs = Expense.objects.filter(user=user, title__icontains=search).order_by("-expense_date")
                 if qs.exists():
                     e = qs.first()
             if not e:
@@ -343,7 +346,9 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
             # Check if existing expense is a daily or weekly recurring expense
             if e.is_recurring and (e.recurring_type or "").strip().lower() in ["daily", "weekly"]:
-                return err("❌ This is a daily or weekly recurring expense, which cannot be modified via the AI Assistant. Please edit it manually.")
+                return err(
+                    "❌ This is a daily or weekly recurring expense, which cannot be modified via the AI Assistant. Please edit it manually."
+                )
 
             # Check if update attempts to set/change it to daily or weekly recurring expense
             new_is_recurring = fields.get("is_recurring", e.is_recurring)
@@ -357,13 +362,15 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
             new_rec_type_str = (new_rec_type or "").strip().lower()
             if (new_is_recur_bool or new_rec_type_str) and new_rec_type_str in ["daily", "weekly"]:
-                return err("❌ I can only manage recurring expenses with Monthly, Quarterly, or Yearly recurrence. Please edit to daily or weekly recurring expenses manually.")
+                return err(
+                    "❌ I can only manage recurring expenses with Monthly, Quarterly, or Yearly recurrence. Please edit to daily or weekly recurring expenses manually."
+                )
 
             # Map snake_case AI keys → serializer camelCase keys
             field_map = {
                 "payment_method": "paymentMethod",
-                "expense_date":   "expenseDate",
-                "is_recurring":   "isRecurring",
+                "expense_date": "expenseDate",
+                "is_recurring": "isRecurring",
                 "recurring_type": "recurringType",
             }
             payload = {field_map.get(k, k): v for k, v in fields.items()}
@@ -372,9 +379,12 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                 return err(f"❌ Validation failed: {ser.errors}")
             e = ser.save()
             record = {
-                "id": e.id, "_id": str(e.id),
-                "title": e.title, "amount": float(e.amount),
-                "category": e.category, "payment_method": e.payment_method,
+                "id": e.id,
+                "_id": str(e.id),
+                "title": e.title,
+                "amount": float(e.amount),
+                "category": e.category,
+                "payment_method": e.payment_method,
                 "expense_date": e.expense_date.isoformat(),
             }
             return ok(f"✏️ Updated **{e.title}** — ₹{e.amount} ({e.category})", "updated", record)
@@ -384,16 +394,16 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             search = data.get("search", "").strip()
             if not search:
                 return err("❌ Provide a search keyword to delete the expense.")
-            qs = Expense.objects.filter(
-                user=user, title__icontains=search
-            ).order_by("-expense_date")
+            qs = Expense.objects.filter(user=user, title__icontains=search).order_by("-expense_date")
             if not qs.exists():
                 return err(f"❌ No expense matching '{search}' found.")
             e = qs.first()
 
             # Check if existing expense is a daily or weekly recurring expense
             if e.is_recurring and (e.recurring_type or "").strip().lower() in ["daily", "weekly"]:
-                return err("❌ This is a daily or weekly recurring expense, which cannot be deleted via the AI Assistant. Please delete it manually.")
+                return err(
+                    "❌ This is a daily or weekly recurring expense, which cannot be deleted via the AI Assistant. Please delete it manually."
+                )
 
             name, amt = e.title, e.amount
             e.delete()
@@ -401,10 +411,10 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
         # ── LIST EXPENSES ─────────────────────────────────────────────
         elif intent == "list_expenses":
-            limit          = min(int(data.get("limit", 10)), 50)   # max 50
+            limit = min(int(data.get("limit", 10)), 50)  # max 50
             category_filter = data.get("category")
-            month_filter   = _parse_month(data.get("month"))
-            year_filter    = data.get("year")
+            month_filter = _parse_month(data.get("month"))
+            year_filter = data.get("year")
 
             qs = Expense.objects.filter(user=user).order_by("-expense_date")
             if category_filter:
@@ -423,51 +433,58 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             for e in expenses:
                 records.append(ExpenseSerializer(e).data)
                 date_str = e.expense_date.strftime("%d %b") if e.expense_date else "?"
-                lines.append(
-                    f"• {date_str} — **{e.title}** ₹{e.amount} ({e.category}, {e.payment_method})"
-                )
+                lines.append(f"• {date_str} — **{e.title}** ₹{e.amount} ({e.category}, {e.payment_method})")
                 total += float(e.amount)
             msg = f"📋 **Expenses** (showing {len(lines)}, total ₹{total:.0f}):\n" + "\n".join(lines)
             return ok(msg, "none", records)
 
         # ── SET / UPSERT BUDGET ───────────────────────────────────────
         elif intent == "set_budget":
-            now   = datetime.now()
+            now = datetime.now()
             month = _parse_month(_get_non_none(["month", "month_val"], data)) or now.month
-            year  = int(_get_non_none(["year", "year_val"], data) or now.year)
+            year = int(_get_non_none(["year", "year_val"], data) or now.year)
 
             existing = Budget.objects.filter(user=user, month=month, year=year).first()
 
-            total_val   = _get_non_none(["total", "monthly", "monthly_budget", "totalMonthlyBudget"], data)
-            weekly_val  = _get_non_none(["weekly", "weekly_budget", "weeklyBudget"], data)
-            daily_val   = _get_non_none(["daily", "daily_budget", "dailyBudget"], data)
-            yearly_val  = _get_non_none(["yearly", "yearly_budget", "yearlyBudget"], data)
+            total_val = _get_non_none(["total", "monthly", "monthly_budget", "totalMonthlyBudget"], data)
+            weekly_val = _get_non_none(["weekly", "weekly_budget", "weeklyBudget"], data)
+            daily_val = _get_non_none(["daily", "daily_budget", "dailyBudget"], data)
+            yearly_val = _get_non_none(["yearly", "yearly_budget", "yearlyBudget"], data)
             warning_val = _get_non_none(["warning_threshold", "warningThreshold", "threshold"], data)
 
-            total = _to_float(total_val) if total_val is not None else (existing.total_monthly_budget if existing else 0.0)
+            total = (
+                _to_float(total_val) if total_val is not None else (existing.total_monthly_budget if existing else 0.0)
+            )
             weekly = _to_float(weekly_val) if weekly_val is not None else (existing.weekly_budget if existing else 0.0)
             daily = _to_float(daily_val) if daily_val is not None else (existing.daily_budget if existing else 0.0)
             yearly = _to_float(yearly_val) if yearly_val is not None else (existing.yearly_budget if existing else 0.0)
-            threshold = int(_to_float(warning_val)) if warning_val is not None else (existing.warning_threshold if existing else 80)
+            threshold = (
+                int(_to_float(warning_val))
+                if warning_val is not None
+                else (existing.warning_threshold if existing else 80)
+            )
 
             b, created = Budget.objects.update_or_create(
-                user=user, month=month, year=year,
+                user=user,
+                month=month,
+                year=year,
                 defaults={
                     "total_monthly_budget": total,
                     "weekly_budget": weekly,
                     "daily_budget": daily,
                     "yearly_budget": yearly,
                     "warning_threshold": threshold,
-                }
+                },
             )
 
             month_label = datetime(b.year, b.month, 1).strftime("%B %Y")
-            verb        = "Created" if created else "Updated"
+            verb = "Created" if created else "Updated"
             record = {
-                "type": "budget", "month": month_label,
+                "type": "budget",
+                "month": month_label,
                 "total": float(b.total_monthly_budget),
                 "weekly": float(b.weekly_budget),
-                "daily":  float(b.daily_budget),
+                "daily": float(b.daily_budget),
             }
             return ok(
                 f"💰 {verb} budget for **{month_label}** — "
@@ -478,9 +495,9 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
         # ── DELETE BUDGET ─────────────────────────────────────────────
         elif intent == "del_budget":
-            now   = datetime.now()
+            now = datetime.now()
             month = _parse_month(_get_non_none(["month", "month_val"], data)) or now.month
-            year  = int(_get_non_none(["year", "year_val"], data) or now.year)
+            year = int(_get_non_none(["year", "year_val"], data) or now.year)
             try:
                 b = Budget.objects.get(user=user, month=month, year=year)
             except Budget.DoesNotExist:
@@ -507,9 +524,9 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
         # ── GET BUDGET (single month) ─────────────────────────────────
         elif intent == "get_budget":
-            now   = datetime.now()
+            now = datetime.now()
             month = _parse_month(_get_non_none(["month", "month_val"], data)) or now.month
-            year  = int(_get_non_none(["year", "year_val"], data) or now.year)
+            year = int(_get_non_none(["year", "year_val"], data) or now.year)
             try:
                 b = Budget.objects.get(user=user, month=month, year=year)
             except Budget.DoesNotExist:
@@ -517,16 +534,19 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                 return ok(f"ℹ️ No budget set for **{label}**. Would you like to create one?", "none")
             label = datetime(b.year, b.month, 1).strftime("%B %Y")
             spent = (
-                Expense.objects.filter(user=user, expense_date__month=month, expense_date__year=year)
-                .aggregate(t=Sum("amount"))["t"] or 0
+                Expense.objects.filter(user=user, expense_date__month=month, expense_date__year=year).aggregate(
+                    t=Sum("amount")
+                )["t"]
+                or 0
             )
             remaining = float(b.total_monthly_budget) - float(spent)
             pct_used = (float(spent) / float(b.total_monthly_budget) * 100) if b.total_monthly_budget else 0
             record = {
-                "type": "budget", "month": label,
+                "type": "budget",
+                "month": label,
                 "total": float(b.total_monthly_budget),
                 "weekly": float(b.weekly_budget),
-                "daily":  float(b.daily_budget),
+                "daily": float(b.daily_budget),
             }
             return ok(
                 f"💰 **{label} Budget** — ₹{b.total_monthly_budget:.0f}/month\n"
@@ -559,19 +579,23 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
                 "#fb923c",  # light orange
             ]
             existing_count = Category.objects.filter(user=user).count()
-            default_color  = _CATEGORY_PALETTE[existing_count % len(_CATEGORY_PALETTE)]
+            default_color = _CATEGORY_PALETTE[existing_count % len(_CATEGORY_PALETTE)]
 
             payload = {
-                "name":          name,
+                "name": name,
                 "monthlyBudget": _to_float(data.get("monthly_budget"), 0),
-                "icon":          data.get("icon") or "ph-package",
-                "color":         data.get("color") or default_color,
+                "icon": data.get("icon") or "ph-package",
+                "color": data.get("color") or default_color,
             }
             ser = CategorySerializer(data=payload)
             if not ser.is_valid():
                 return err(f"❌ Validation failed: {ser.errors}")
             c = ser.save(user=user)
-            return ok(f"✅ Created category **{c.name}** (₹{c.monthly_budget:.0f}/month)", "created", CategorySerializer(c).data)
+            return ok(
+                f"✅ Created category **{c.name}** (₹{c.monthly_budget:.0f}/month)",
+                "created",
+                CategorySerializer(c).data,
+            )
 
         # ── EDIT CATEGORY ─────────────────────────────────────────────
         elif intent == "edit_category":
@@ -592,7 +616,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
             return ok(
                 f"✏️ Updated category **{c.name}** (budget ₹{c.monthly_budget:.0f}/month)",
                 "updated",
-                CategorySerializer(c).data
+                CategorySerializer(c).data,
             )
 
         # ── DELETE CATEGORY ───────────────────────────────────────────
@@ -627,6 +651,7 @@ def _execute_crud(user, intent: str, data: dict) -> dict:
 
             # Save it to the user's settings if possible
             from ..models import UserSettings
+
             try:
                 us, _ = UserSettings.objects.get_or_create(user=user)
                 if us.theme != theme:
@@ -715,9 +740,18 @@ USER FINANCIAL DATA:
 # ─────────────────────────────────────────────────────────────────────────────
 
 CRUD_INTENTS = {
-    "add_expense", "edit_expense", "del_expense", "list_expenses",
-    "set_budget",  "get_budget",   "del_budget",   "list_budgets",
-    "add_category","edit_category","del_category","list_categories",
+    "add_expense",
+    "edit_expense",
+    "del_expense",
+    "list_expenses",
+    "set_budget",
+    "get_budget",
+    "del_budget",
+    "list_budgets",
+    "add_category",
+    "edit_category",
+    "del_category",
+    "list_categories",
     "change_theme",
 }
 
@@ -725,6 +759,7 @@ CRUD_INTENTS = {
 # ─────────────────────────────────────────────────────────────────────────────
 # AI ASSISTANT VIEW
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class AIAssistantView(APIView):
     """
@@ -734,37 +769,38 @@ class AIAssistantView(APIView):
     """
 
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes     = []  # unauthenticated allowed (demo fallback to first user)
-    parser_classes         = [JSONParser, MultiPartParser, FormParser]
+    permission_classes = []  # unauthenticated allowed (demo fallback to first user)
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get(self, request):
         user = request.user
         if not user or not user.is_authenticated:
             from django.contrib.auth.models import User
+
             user = User.objects.first()
             if not user:
                 return ApiResponse.error("No user found. Please log in.", 401)
 
-        db_messages = AIChatMessage.objects.filter(user=user).order_by('created_at')
+        db_messages = AIChatMessage.objects.filter(user=user).order_by("created_at")
         history = []
         for msg in db_messages:
-            history.append({
-                "role": "user",
-                "parts": msg.prompt
-            })
-            history.append({
-                "role": "model",
-                "parts": msg.response,
-                "crudType": msg.crud_type,
-                "crudRecord": msg.crud_record,
-                "isDashboard": msg.is_dashboard
-            })
+            history.append({"role": "user", "parts": msg.prompt})
+            history.append(
+                {
+                    "role": "model",
+                    "parts": msg.response,
+                    "crudType": msg.crud_type,
+                    "crudRecord": msg.crud_record,
+                    "isDashboard": msg.is_dashboard,
+                }
+            )
         return ApiResponse.success(data={"history": history}, message="History retrieved successfully")
 
     def delete(self, request):
         user = request.user
         if not user or not user.is_authenticated:
             from django.contrib.auth.models import User
+
             user = User.objects.first()
             if not user:
                 return ApiResponse.error("No user found. Please log in.", 401)
@@ -774,7 +810,7 @@ class AIAssistantView(APIView):
 
     def post(self, request):
         # ── 1. Validate inputs ────────────────────────────────────────
-        text       = request.data.get("text", "").strip()
+        text = request.data.get("text", "").strip()
         audio_file = request.FILES.get("audio")
         image_file = request.FILES.get("image")
 
@@ -789,33 +825,29 @@ class AIAssistantView(APIView):
         user = request.user
         if not user or not user.is_authenticated:
             from django.contrib.auth.models import User
+
             user = User.objects.first()
             if not user:
                 return ApiResponse.error("No user found. Please log in.", 401)
 
         # ── 3. Handle Special Dashboard Command locally ──────────────────
-        if text == '📊 Show me my dashboard':
+        if text == "📊 Show me my dashboard":
             ai_message = "📊 Here's your financial overview for this month:"
             AIChatMessage.objects.create(
-                user=user,
-                prompt=text,
-                response=ai_message,
-                crud_type='none',
-                crud_record=None,
-                is_dashboard=True
+                user=user, prompt=text, response=ai_message, crud_type="none", crud_record=None, is_dashboard=True
             )
             return ApiResponse.success(
                 data={
-                    "message":     ai_message,
-                    "crud_type":   "none",
+                    "message": ai_message,
+                    "crud_type": "none",
                     "crud_record": None,
-                    "action":      None,
+                    "action": None,
                 },
                 message="AI responded successfully",
             )
 
         # ── 4. Parse conversation history from Database ──────────────────
-        db_messages = AIChatMessage.objects.filter(user=user).order_by('created_at')
+        db_messages = AIChatMessage.objects.filter(user=user).order_by("created_at")
 
         # ── 5. Build live user context from DB ────────────────────────
         try:
@@ -853,10 +885,10 @@ class AIAssistantView(APIView):
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model":       GROQ_MODEL,
-                    "messages":    messages,
+                    "model": GROQ_MODEL,
+                    "messages": messages,
                     "temperature": GROQ_TEMPERATURE,
-                    "max_tokens":  GROQ_MAX_TOKENS,
+                    "max_tokens": GROQ_MAX_TOKENS,
                 },
                 timeout=60,
             )
@@ -872,36 +904,31 @@ class AIAssistantView(APIView):
             return ApiResponse.error(f"AI service unavailable: {exc}", 503)
 
         # ── 8. Parse AI JSON response ─────────────────────────────────
-        raw_content = (
-            resp.json()
-            .get("choices", [{}])[0]
-            .get("message", {})
-            .get("content", "")
-        )
+        raw_content = resp.json().get("choices", [{}])[0].get("message", {}).get("content", "")
         if isinstance(raw_content, list):
             raw_content = " ".join(str(p.get("text", "")) for p in raw_content if isinstance(p, dict))
 
-        ai_message  = raw_content or "Sorry, I couldn't process that."
-        intent      = "none"
-        ai_data     = {}
-        crud_type   = "none"
+        ai_message = raw_content or "Sorry, I couldn't process that."
+        intent = "none"
+        ai_data = {}
+        crud_type = "none"
         crud_record = None
 
         try:
             cleaned = _strip_json_fences(raw_content)
-            parsed  = json.loads(cleaned)
+            parsed = json.loads(cleaned)
             if isinstance(parsed, dict):
-                intent     = parsed.get("intent", "none")
+                intent = parsed.get("intent", "none")
                 ai_message = parsed.get("message", ai_message)
-                ai_data    = parsed.get("data") or {}
+                ai_data = parsed.get("data") or {}
         except (json.JSONDecodeError, Exception) as exc:
             logger.warning(f"AI response not JSON: {exc} — content: {raw_content[:200]}")
 
         # ── 9. Execute CRUD if needed ─────────────────────────────────
         if intent in CRUD_INTENTS:
-            result      = _execute_crud(user, intent, ai_data)
-            ai_message  = result["message"] or ai_message
-            crud_type   = result["crud_type"]
+            result = _execute_crud(user, intent, ai_data)
+            ai_message = result["message"] or ai_message
+            crud_type = result["crud_type"]
             crud_record = result.get("crud_record")
 
         # ── 10. Save to Database ──────────────────────────────────────
@@ -911,16 +938,16 @@ class AIAssistantView(APIView):
             response=ai_message,
             crud_type=crud_type,
             crud_record=crud_record,
-            is_dashboard=(intent == "none" and "financial overview" in ai_message)
+            is_dashboard=(intent == "none" and "financial overview" in ai_message),
         )
 
         # ── 11. Return response ───────────────────────────────────────
         return ApiResponse.success(
             data={
-                "message":     ai_message,
-                "crud_type":   crud_type,
+                "message": ai_message,
+                "crud_type": crud_type,
                 "crud_record": crud_record,
-                "action":      None,
+                "action": None,
             },
             message="AI responded successfully",
         )

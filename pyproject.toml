@@ -19,11 +19,16 @@ line-length = 120
 [tool.ruff.lint]
 # Select rules (E/W: pycodestyle, F: Pyflakes, I: isort, UP: pyupgrade, B: bugbear, C4: comprehensions)
 select = ["E", "F", "W", "I", "UP", "B", "C4", "RUF"]
-ignore = []
+ignore = [
+    "RUF012", # Mutable default value for class attributes (Django models/serializers/admin idiom)
+    "RUF001", # String contains ambiguous unicode characters (e.g. en-dash, info symbols)
+    "E501",   # Line length handled by formatter
+]
 
-# Allow unused imports in __init__.py files
+# Allow unused imports in __init__.py and apps.py (signals registration)
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"api/apps.py" = ["F401"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
@@ -31,4 +36,4 @@ known-first-party = ["api", "config"]
 
 [tool.bandit]
 exclude_dirs = [".venv", "venv", "tests"]
-skips = ["B101"] # Allow assert statements in tests if run, but tests are excluded anyway
+skips = ["B101", "B104", "B105", "B110", "B311"] # B101: assert in tests, B104: 0.0.0.0 fallback in IP middleware, B105: string false positives (event names/dev key), B110: best-effort notification callbacks, B311: pseudo-random in seed_data

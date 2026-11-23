@@ -8,8 +8,8 @@ Usage:
     python manage.py generate_weekly_reports --user <user_id>
 """
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 
 from api.services import generate_weekly_report
 

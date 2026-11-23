@@ -1,25 +1,26 @@
 import json
 import logging
+
 import requests
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 from ..models import Chat, Message
 from ..serializers import ChatSerializer, MessageSerializer
 from ..utils import ApiResponse, get_pagination_params
 from .ai_views import (
-    _build_user_context,
-    _strip_json_fences,
-    _execute_crud,
-    SYSTEM_PROMPT_TEMPLATE,
-    GROQ_API_KEY,
-    GROQ_MODEL,
-    GROQ_API_URL,
-    GROQ_TEMPERATURE,
-    GROQ_MAX_TOKENS,
     CRUD_INTENTS,
+    GROQ_API_KEY,
+    GROQ_API_URL,
+    GROQ_MAX_TOKENS,
+    GROQ_MODEL,
+    GROQ_TEMPERATURE,
+    SYSTEM_PROMPT_TEMPLATE,
+    _build_user_context,
+    _execute_crud,
+    _strip_json_fences,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,15 +31,16 @@ class ChatListCreateView(APIView):
     GET /api/chats/ - List all chats for current user
     POST /api/chats/ - Create a new chat
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         page, limit = get_pagination_params(request.query_params)
 
-        chats = Chat.objects.filter(user=request.user).order_by('-updated_at')
+        chats = Chat.objects.filter(user=request.user).order_by("-updated_at")
         total = chats.count()
         offset = (page - 1) * limit
-        paginated = chats[offset:offset + limit]
+        paginated = chats[offset : offset + limit]
 
         serializer = ChatSerializer(paginated, many=True)
         return ApiResponse.paginated(serializer.data, page, limit, total, message="Chats retrieved successfully")
@@ -55,6 +57,7 @@ class ChatDetailView(APIView):
     PATCH /api/chats/<id>/ - Rename chat
     DELETE /api/chats/<id>/ - Delete chat
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -64,10 +67,10 @@ class ChatDetailView(APIView):
 
     def patch(self, request, pk):
         chat = get_object_or_404(Chat, id=pk, user=request.user)
-        title = request.data.get('title', '').strip()
+        title = request.data.get("title", "").strip()
         if not title:
             return ApiResponse.error("Title cannot be empty", 400)
-        
+
         chat.title = title
         chat.save()
         serializer = ChatSerializer(chat)
@@ -84,6 +87,7 @@ class MessageListCreateView(APIView):
     GET /api/chats/<chat_id>/messages/ - Retrieve messages for chat
     POST /api/chats/<chat_id>/messages/ - Send message in chat & get AI response
     """
+
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
@@ -91,10 +95,10 @@ class MessageListCreateView(APIView):
         chat = get_object_or_404(Chat, id=chat_pk, user=request.user)
         page, limit = get_pagination_params(request.query_params)
 
-        messages = Message.objects.filter(chat=chat).order_by('-created_at')
+        messages = Message.objects.filter(chat=chat).order_by("-created_at")
         total = messages.count()
         offset = (page - 1) * limit
-        paginated = list(messages[offset:offset + limit])
+        paginated = list(messages[offset : offset + limit])
         paginated.reverse()
 
         serializer = MessageSerializer(paginated, many=True)
@@ -102,9 +106,9 @@ class MessageListCreateView(APIView):
 
     def post(self, request, chat_pk):
         chat = get_object_or_404(Chat, id=chat_pk, user=request.user)
-        
+
         # ── 1. Validate inputs ────────────────────────────────────────
-        text       = request.data.get("text", "").strip()
+        text = request.data.get("text", "").strip()
         audio_file = request.FILES.get("audio")
         image_file = request.FILES.get("image")
 
@@ -123,14 +127,10 @@ class MessageListCreateView(APIView):
             prompt += f"\n[Image file: {image_file.name}]"
 
         # ── 2. Create User Message object ─────────────────────────────
-        user_msg = Message.objects.create(
-            chat=chat,
-            role="user",
-            content=prompt
-        )
+        user_msg = Message.objects.create(chat=chat, role="user", content=prompt)
 
         # ── 3. Parse conversation history from Database ──────────────────
-        db_messages = Message.objects.filter(chat=chat).order_by('created_at')
+        db_messages = Message.objects.filter(chat=chat).order_by("created_at")
 
         # ── 4. Build live user context from DB ────────────────────────
         try:
@@ -156,10 +156,10 @@ class MessageListCreateView(APIView):
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model":       GROQ_MODEL,
-                    "messages":    messages_payload,
+                    "model": GROQ_MODEL,
+                    "messages": messages_payload,
                     "temperature": GROQ_TEMPERATURE,
-                    "max_tokens":  GROQ_MAX_TOKENS,
+                    "max_tokens": GROQ_MAX_TOKENS,
                 },
                 timeout=60,
             )
@@ -175,47 +175,42 @@ class MessageListCreateView(APIView):
             return ApiResponse.error(f"AI service unavailable: {exc}", 503)
 
         # ── 7. Parse AI JSON response ─────────────────────────────────
-        raw_content = (
-            resp.json()
-            .get("choices", [{}])[0]
-            .get("message", {})
-            .get("content", "")
-        )
+        raw_content = resp.json().get("choices", [{}])[0].get("message", {}).get("content", "")
         if isinstance(raw_content, list):
             raw_content = " ".join(str(p.get("text", "")) for p in raw_content if isinstance(p, dict))
 
-        ai_message  = raw_content or "Sorry, I couldn't process that."
-        intent      = "none"
-        ai_data     = {}
-        crud_type   = "none"
+        ai_message = raw_content or "Sorry, I couldn't process that."
+        intent = "none"
+        ai_data = {}
+        crud_type = "none"
         crud_record = None
 
         try:
             cleaned = _strip_json_fences(raw_content)
-            parsed  = json.loads(cleaned)
+            parsed = json.loads(cleaned)
             if isinstance(parsed, dict):
-                intent     = parsed.get("intent", "none")
+                intent = parsed.get("intent", "none")
                 ai_message = parsed.get("message", ai_message)
-                ai_data    = parsed.get("data") or {}
+                ai_data = parsed.get("data") or {}
         except (json.JSONDecodeError, Exception) as exc:
             logger.warning(f"AI response not JSON: {exc} — content: {raw_content[:200]}")
 
         # ── 8. Execute CRUD if needed ─────────────────────────────────
         if intent in CRUD_INTENTS:
-            result      = _execute_crud(request.user, intent, ai_data)
-            ai_message  = result["message"] or ai_message
-            crud_type   = result["crud_type"]
+            result = _execute_crud(request.user, intent, ai_data)
+            ai_message = result["message"] or ai_message
+            crud_type = result["crud_type"]
             crud_record = result.get("crud_record")
 
         # ── 9. Save Assistant Message and update Chat ────────────────
-        is_dash = (intent == "none" and "financial overview" in ai_message)
+        is_dash = intent == "none" and "financial overview" in ai_message
         assistant_msg = Message.objects.create(
             chat=chat,
             role="assistant",
             content=ai_message,
             crud_type=crud_type,
             crud_record=crud_record,
-            is_dashboard=is_dash
+            is_dashboard=is_dash,
         )
 
         chat.last_message = ai_message
@@ -230,11 +225,11 @@ class MessageListCreateView(APIView):
         # ── 10. Return response ───────────────────────────────────────
         return ApiResponse.success(
             data={
-                "message":     ai_message,
-                "crud_type":   crud_type,
+                "message": ai_message,
+                "crud_type": crud_type,
                 "crud_record": crud_record,
-                "action":      None,
-                "user_msg":    MessageSerializer(user_msg).data,
+                "action": None,
+                "user_msg": MessageSerializer(user_msg).data,
                 "assistant_msg": MessageSerializer(assistant_msg).data,
             },
             message="AI responded successfully",

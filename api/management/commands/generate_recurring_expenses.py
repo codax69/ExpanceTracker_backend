@@ -8,43 +8,40 @@ Usage:
     python manage.py generate_recurring_expenses
     python manage.py generate_recurring_expenses --user <user_id>
 """
-from django.core.management.base import BaseCommand
+
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 
 from api.services import generate_recurring_expenses
 
 
 class Command(BaseCommand):
-    help = 'Generate expense records from active recurring expense templates'
+    help = "Generate expense records from active recurring expense templates"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--user',
+            "--user",
             type=int,
-            help='User ID to generate expenses for (default: all users)',
+            help="User ID to generate expenses for (default: all users)",
         )
 
     def handle(self, *args, **options):
-        user_id = options.get('user')
+        user_id = options.get("user")
         user = None
 
         if user_id:
             try:
                 user = User.objects.get(id=user_id)
-                self.stdout.write(f'Processing recurring expenses for user: {user.username}')
+                self.stdout.write(f"Processing recurring expenses for user: {user.username}")
             except User.DoesNotExist:
-                self.stderr.write(f'User with id {user_id} not found')
+                self.stderr.write(f"User with id {user_id} not found")
                 return
 
         created = generate_recurring_expenses(user=user)
 
         if created:
-            self.stdout.write(
-                self.style.SUCCESS(f'Successfully generated {len(created)} expense(s)')
-            )
+            self.stdout.write(self.style.SUCCESS(f"Successfully generated {len(created)} expense(s)"))
             for expense in created:
-                self.stdout.write(
-                    f'  - {expense.title}: ${expense.amount} on {expense.expense_date.date()}'
-                )
+                self.stdout.write(f"  - {expense.title}: ${expense.amount} on {expense.expense_date.date()}")
         else:
-            self.stdout.write(self.style.WARNING('No expenses needed to be generated'))
+            self.stdout.write(self.style.WARNING("No expenses needed to be generated"))

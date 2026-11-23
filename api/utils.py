@@ -2,13 +2,15 @@
 Utility helpers for ExpenseIQ Django backend.
 Matches the Node.js API response format.
 """
-from rest_framework.views import exception_handler
-from rest_framework.response import Response
-from rest_framework import status
+
 import math
-from datetime import datetime, timedelta
-from django.utils import timezone
+from datetime import timedelta
+
 from django.conf import settings
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
 
 
 # ───── Custom Exception Handler ─────
@@ -21,15 +23,15 @@ def custom_exception_handler(exc, context):
 
     if response is not None:
         custom_data = {
-            'success': False,
-            'message': str(exc.detail) if hasattr(exc, 'detail') else str(exc),
+            "success": False,
+            "message": str(exc.detail) if hasattr(exc, "detail") else str(exc),
         }
-        if hasattr(exc, 'detail') and isinstance(exc.detail, dict):
-            custom_data['errors'] = exc.detail
-            custom_data['message'] = 'Validation failed'
-        elif hasattr(exc, 'detail') and isinstance(exc.detail, list):
-            custom_data['errors'] = exc.detail
-            custom_data['message'] = 'Validation failed'
+        if hasattr(exc, "detail") and isinstance(exc.detail, dict):
+            custom_data["errors"] = exc.detail
+            custom_data["message"] = "Validation failed"
+        elif hasattr(exc, "detail") and isinstance(exc.detail, list):
+            custom_data["errors"] = exc.detail
+            custom_data["message"] = "Validation failed"
 
         response.data = custom_data
 
@@ -41,40 +43,42 @@ class ApiResponse:
     """Mirrors the Node.js ApiResponse utility class."""
 
     @staticmethod
-    def success(data=None, message='Success', status_code=200, meta=None):
-        response = {'success': True, 'message': message, 'data': data}
+    def success(data=None, message="Success", status_code=200, meta=None):
+        response = {"success": True, "message": message, "data": data}
         if meta:
-            response['meta'] = meta
+            response["meta"] = meta
         return Response(response, status=status_code)
 
     @staticmethod
-    def created(data=None, message='Created successfully'):
-        return Response({'success': True, 'message': message, 'data': data}, status=status.HTTP_201_CREATED)
+    def created(data=None, message="Created successfully"):
+        return Response({"success": True, "message": message, "data": data}, status=status.HTTP_201_CREATED)
 
     @staticmethod
-    def error(message='Internal server error', status_code=500, errors=None):
-        response = {'success': False, 'message': message}
+    def error(message="Internal server error", status_code=500, errors=None):
+        response = {"success": False, "message": message}
         if errors:
-            response['errors'] = errors
+            response["errors"] = errors
         return Response(response, status=status_code)
 
     @staticmethod
-    def paginated(data, page, limit, total, message='Success'):
+    def paginated(data, page, limit, total, message="Success"):
         page = int(page)
         limit = int(limit)
-        return Response({
-            'success': True,
-            'message': message,
-            'data': data,
-            'meta': {
-                'page': page,
-                'limit': limit,
-                'total': total,
-                'totalPages': math.ceil(total / limit) if limit > 0 else 0,
-                'hasNextPage': page * limit < total,
-                'hasPrevPage': page > 1,
-            },
-        })
+        return Response(
+            {
+                "success": True,
+                "message": message,
+                "data": data,
+                "meta": {
+                    "page": page,
+                    "limit": limit,
+                    "total": total,
+                    "totalPages": math.ceil(total / limit) if limit > 0 else 0,
+                    "hasNextPage": page * limit < total,
+                    "hasPrevPage": page > 1,
+                },
+            }
+        )
 
 
 # ───── Date Helpers (matching Node.js dateHelpers.js) ─────
@@ -143,8 +147,8 @@ def get_last_n_months_labels(n=6):
         else:
             end_date = start.replace(month=month + 1, day=1) - timedelta(days=1)
         end = end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
-        label = start.strftime('%b %Y')
-        labels.append({'label': label, 'start': start, 'end': end, 'month': month, 'year': year})
+        label = start.strftime("%b %Y")
+        labels.append({"label": label, "start": start, "end": end, "month": month, "year": year})
     return labels
 
 
@@ -163,17 +167,17 @@ def get_pagination_params(query_params, default_limit=None):
     Returns:
         tuple: (page, limit) as integers
     """
-    max_limit = getattr(settings, 'PAGINATION_MAX_LIMIT', 100)
+    max_limit = getattr(settings, "PAGINATION_MAX_LIMIT", 100)
     if default_limit is None:
-        default_limit = getattr(settings, 'PAGINATION_DEFAULT_LIMIT', 20)
+        default_limit = getattr(settings, "PAGINATION_DEFAULT_LIMIT", 20)
 
     try:
-        page = max(1, int(query_params.get('page', 1)))
+        page = max(1, int(query_params.get("page", 1)))
     except (TypeError, ValueError):
         page = 1
 
     try:
-        limit = int(query_params.get('limit', default_limit))
+        limit = int(query_params.get("limit", default_limit))
     except (TypeError, ValueError):
         limit = default_limit
 
@@ -188,8 +192,22 @@ def _add_months(source_date, months):
     month = month % 12 + 1
     day = min(
         source_date.day,
-        [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
-         31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 30, 31][month - 1]
+        [
+            31,
+            29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+            31,
+            30,
+            31,
+            30,
+            31,
+            31,
+            30,
+            31,
+            30,
+            31,
+            30,
+            31,
+        ][month - 1],
     )
     return source_date.replace(year=year, month=month, day=day)
 
@@ -197,13 +215,13 @@ def _add_months(source_date, months):
 def calculate_next_due_date(current_date, frequency):
     """Calculate the next due date based on frequency."""
     freq_map = {
-        'daily': 1,
-        'weekly': 7,
-        'monthly': 1,
-        'quarterly': 3,
-        'yearly': 12,
+        "daily": 1,
+        "weekly": 7,
+        "monthly": 1,
+        "quarterly": 3,
+        "yearly": 12,
     }
     months = freq_map.get(frequency, 0)
-    if frequency in ('daily', 'weekly'):
+    if frequency in ("daily", "weekly"):
         return current_date + timedelta(days=months)
     return _add_months(current_date, months)

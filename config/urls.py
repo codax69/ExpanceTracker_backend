@@ -2,20 +2,37 @@
 
 import sys
 import time
+from datetime import UTC
 from pathlib import Path
+
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.contrib.auth.decorators import login_required
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.http import HttpResponse, JsonResponse
+from django.urls import include, path
+from django.views.generic import TemplateView
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from datetime import UTC
-
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.http import HttpResponse, JsonResponse
-from django.urls import include, path
+from api.views.auth_views import (  # noqa: E402
+    JWTChangePasswordView,
+    JWTLoginView,
+    JWTLogoutView,
+    JWTMeView,
+    JWTRefreshView,
+    JWTRegisterView,
+    login_view,
+    logout_view,
+    password_reset_view,
+    profile_view,
+    register_view,
+)
+from api.views.general_views import index_view  # noqa: E402
 
 _start_time = time.time()
 
@@ -98,25 +115,6 @@ self.addEventListener('notificationclick', (event) => {{
 """
     return HttpResponse(script, content_type="application/javascript")
 
-
-from django.contrib.auth.decorators import login_required
-from django.views.generic import TemplateView
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-
-from api.views.auth_views import (
-    JWTChangePasswordView,
-    JWTLoginView,
-    JWTLogoutView,
-    JWTMeView,
-    JWTRefreshView,
-    JWTRegisterView,
-    login_view,
-    logout_view,
-    password_reset_view,
-    profile_view,
-    register_view,
-)
-from api.views.general_views import index_view
 
 urlpatterns = [
     path("", index_view, name="home"),

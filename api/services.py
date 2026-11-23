@@ -3,13 +3,13 @@ Business logic services for ExpenseIQ.
 Keeps complex operations out of views and models.
 """
 
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
 
-from .models import RecurringExpense, Expense
+from .models import Expense, RecurringExpense
 from .utils import calculate_next_due_date
 
 
@@ -89,7 +89,7 @@ def generate_recurring_expenses(user=None):
     # Deliver only after the database transaction is committed, so a push never
     # describes an expense that later rolls back.
     if created or deactivated:
-        from .notifications import send_push_notification, notify_recurring_expense_ended
+        from .notifications import notify_recurring_expense_ended, send_push_notification
 
         def dispatch_notifications():
             for expense in created:
@@ -118,7 +118,6 @@ def get_recurring_dashboard_stats(user):
         upcomingPayments, overduePayments, nextDueDate.
     """
     today = timezone.now().date()
-    start_of_month = today.replace(day=1)
 
     active = RecurringExpense.objects.filter(user=user, is_active=True)
 
@@ -189,11 +188,13 @@ def generate_weekly_report(user):
     """
     Calculate weekly spending stats and dispatch a push notification summary to the user.
     """
-    from django.utils import timezone
     from datetime import timedelta
+
     from django.db.models import Sum
-    from .notifications import send_push_notification
+    from django.utils import timezone
+
     from .models import UserSettings
+    from .notifications import send_push_notification
 
     # Define periods
     today = timezone.localtime(timezone.now())
@@ -248,8 +249,10 @@ def cleanup_stale_device_tokens(days=30):
     """
     Remove DeviceToken records that have not been seen for more than the specified number of days.
     """
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
+
     from .models import DeviceToken
 
     cutoff = timezone.now() - timedelta(days=days)

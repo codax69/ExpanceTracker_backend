@@ -4,9 +4,10 @@ Uses Django's cache framework for per-IP request throttling.
 """
 
 import time
+
+from django.conf import settings
 from django.core.cache import cache
 from django.http import JsonResponse
-from django.conf import settings
 from django.middleware.csrf import get_token
 
 
@@ -16,6 +17,7 @@ class EnsureCsrfCookieMiddleware:
     This is required so that JavaScript can read the csrftoken cookie
     and include it as X-CSRFToken header on POST/PUT/DELETE requests.
     """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -42,12 +44,8 @@ class RateLimitMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.config = getattr(settings, "RATE_LIMIT_CONFIG", {})
-        self.global_limit, self.global_window = self._parse_rate(
-            self.config.get("GLOBAL_RATE", "200/minute")
-        )
-        self.auth_limit, self.auth_window = self._parse_rate(
-            self.config.get("AUTH_RATE", "10/minute")
-        )
+        self.global_limit, self.global_window = self._parse_rate(self.config.get("GLOBAL_RATE", "200/minute"))
+        self.auth_limit, self.auth_window = self._parse_rate(self.config.get("AUTH_RATE", "10/minute"))
         self.auth_paths = self.config.get("AUTH_PATHS", ["/api/v1/auth/"])
         self.block_duration = self.config.get("BLOCK_DURATION", 300)
 

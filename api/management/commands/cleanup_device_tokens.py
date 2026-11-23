@@ -7,6 +7,7 @@ Usage:
 """
 
 from django.core.management.base import BaseCommand
+
 from api.services import cleanup_stale_device_tokens
 
 

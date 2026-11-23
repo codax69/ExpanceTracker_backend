@@ -1,16 +1,14 @@
 """Authenticated device-registration and FCM test endpoints."""
 
 from django.conf import settings
-from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from ..models import DeviceToken
-from ..serializers import DeviceTokenSerializer
 from ..notifications import send_push_notification
+from ..serializers import DeviceTokenSerializer
 from ..utils import ApiResponse
-
 
 
 class FirebaseConfigView(APIView):
@@ -39,6 +37,7 @@ class DeviceTokenListCreateView(APIView):
 
         token = serializer.validated_data.pop("token")
         from hashlib import sha256
+
         token_hash = sha256(token.encode("utf-8")).hexdigest()
         DeviceToken.objects.filter(token_hash=token_hash).exclude(user=request.user).delete()
         device, created = DeviceToken.objects.update_or_create(
@@ -48,7 +47,9 @@ class DeviceTokenListCreateView(APIView):
         )
 
         # Keep only the 3 most recent tokens per user to prevent stale token buildup
-        recent_ids = DeviceToken.objects.filter(user=request.user).order_by('-last_seen_at').values_list('id', flat=True)[:3]
+        recent_ids = (
+            DeviceToken.objects.filter(user=request.user).order_by("-last_seen_at").values_list("id", flat=True)[:3]
+        )
         DeviceToken.objects.filter(user=request.user).exclude(id__in=list(recent_ids)).delete()
         return ApiResponse.success(
             DeviceTokenSerializer(device).data,

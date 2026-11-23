@@ -3,10 +3,11 @@ Custom JWT Cookie Authentication for ExpenseIQ.
 Reads access tokens from HTTP-only cookies instead of Authorization headers.
 This prevents XSS attacks from stealing tokens.
 """
+
+from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.conf import settings
 
 
 class CookieJWTAuthentication(JWTAuthentication):
@@ -18,7 +19,7 @@ class CookieJWTAuthentication(JWTAuthentication):
 
     def authenticate(self, request):
         # 1. Try reading from the HTTP-only cookie first
-        raw_token = request.COOKIES.get(settings.JWT_COOKIE_NAMES['access'])
+        raw_token = request.COOKIES.get(settings.JWT_COOKIE_NAMES["access"])
 
         if raw_token is None:
             # 2. Fall back to standard Authorization header
@@ -37,8 +38,8 @@ def get_tokens_for_user(user):
     """Generate access + refresh token pair for a user."""
     refresh = RefreshToken.for_user(user)
     return {
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
     }
 
 
@@ -48,33 +49,33 @@ def set_token_cookies(response, tokens):
     - access_token:  short-lived (15 min), used for API auth
     - refresh_token: long-lived (7 days), used to rotate access tokens
     """
-    access_max_age = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()
-    refresh_max_age = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()
+    access_max_age = settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()
+    refresh_max_age = settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()
     secure = not settings.DEBUG  # Only Secure in production (HTTPS)
 
     response.set_cookie(
-        key=settings.JWT_COOKIE_NAMES['access'],
-        value=tokens['access'],
+        key=settings.JWT_COOKIE_NAMES["access"],
+        value=tokens["access"],
         max_age=int(access_max_age),
         httponly=True,
         secure=secure,
-        samesite='Lax',
-        path='/',
+        samesite="Lax",
+        path="/",
     )
     response.set_cookie(
-        key=settings.JWT_COOKIE_NAMES['refresh'],
-        value=tokens['refresh'],
+        key=settings.JWT_COOKIE_NAMES["refresh"],
+        value=tokens["refresh"],
         max_age=int(refresh_max_age),
         httponly=True,
         secure=secure,
-        samesite='Lax',
-        path='/',
+        samesite="Lax",
+        path="/",
     )
     return response
 
 
 def clear_token_cookies(response):
     """Delete both token cookies on logout."""
-    response.delete_cookie(settings.JWT_COOKIE_NAMES['access'], path='/', samesite='Lax')
-    response.delete_cookie(settings.JWT_COOKIE_NAMES['refresh'], path='/', samesite='Lax')
+    response.delete_cookie(settings.JWT_COOKIE_NAMES["access"], path="/", samesite="Lax")
+    response.delete_cookie(settings.JWT_COOKIE_NAMES["refresh"], path="/", samesite="Lax")
     return response

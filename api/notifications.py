@@ -127,9 +127,11 @@ def send_push_notification(user, *, event_type, title, body, url="/", data=None)
     if payload_bytes > FCM_PAYLOAD_MAX_BYTES:
         logger.warning(
             "FCM payload %d bytes exceeds %d limit for user id=%s; truncating.",
-            payload_bytes, FCM_PAYLOAD_MAX_BYTES, user.id,
+            payload_bytes,
+            FCM_PAYLOAD_MAX_BYTES,
+            user.id,
         )
-        payload = {k: v for k, v in list(payload.items())[:5]}
+        payload = dict(list(payload.items())[:5])
     sent = 0
     invalid_tokens = []
     seen_ids = []
@@ -152,7 +154,7 @@ def send_push_notification(user, *, event_type, title, body, url="/", data=None)
             continue
 
         sent += result.success_count
-        for token, response in zip(token_batch, result.responses):
+        for token, response in zip(token_batch, result.responses, strict=False):
             if response.success:
                 continue
             error_code = getattr(response.exception, "code", "") if response.exception else ""
@@ -178,7 +180,7 @@ def send_push_notification(user, *, event_type, title, body, url="/", data=None)
                 )
 
     invalid_set = set(invalid_tokens)
-    for token, did in zip(tokens, device_ids):
+    for token, did in zip(tokens, device_ids, strict=False):
         if token not in invalid_set:
             seen_ids.append(did)
 
@@ -237,9 +239,7 @@ def notify_budget_status(user, expense):
 
     # ── Daily budget check ──
     if budget.daily_budget > 0:
-        daily_total = user.expenses.filter(expense_date__gte=today).aggregate(
-            total=Sum("amount")
-        )["total"] or 0
+        daily_total = user.expenses.filter(expense_date__gte=today).aggregate(total=Sum("amount"))["total"] or 0
         if daily_total >= budget.daily_budget:
             return send_once(
                 user,
@@ -265,9 +265,7 @@ def notify_budget_status(user, expense):
     # ── Weekly budget check ──
     if budget.weekly_budget > 0:
         week_start = today - timedelta(days=today.weekday())
-        week_total = user.expenses.filter(expense_date__gte=week_start).aggregate(
-            total=Sum("amount")
-        )["total"] or 0
+        week_total = user.expenses.filter(expense_date__gte=week_start).aggregate(total=Sum("amount"))["total"] or 0
         week_key = f"{week_start.isoformat()}"
         if week_total >= budget.weekly_budget:
             return send_once(
@@ -294,9 +292,7 @@ def notify_budget_status(user, expense):
     # ── Yearly budget check ──
     if budget.yearly_budget > 0:
         year_start = today.replace(month=1, day=1)
-        year_total = user.expenses.filter(expense_date__gte=year_start).aggregate(
-            total=Sum("amount")
-        )["total"] or 0
+        year_total = user.expenses.filter(expense_date__gte=year_start).aggregate(total=Sum("amount"))["total"] or 0
         year_key = f"{year_start.year}"
         if year_total >= budget.yearly_budget:
             return send_once(
@@ -354,9 +350,12 @@ def notify_category_budget_exceeded(user, expense):
     cat_obj = Category.objects.filter(user=user, name=expense.category).first()
     if not cat_obj or cat_obj.monthly_budget <= 0:
         return {"sent": 0, "skipped": "no_category_budget"}
-    total = Expense.objects.filter(
-        user=user, category=expense.category, expense_date__gte=month_start
-    ).aggregate(total=Sum("amount"))["total"] or 0
+    total = (
+        Expense.objects.filter(user=user, category=expense.category, expense_date__gte=month_start).aggregate(
+            total=Sum("amount")
+        )["total"]
+        or 0
+    )
     if total <= cat_obj.monthly_budget:
         return {"sent": 0, "skipped": "under_category_budget"}
     day_key = f"{expense_date.year}-{expense_date.month:02d}-{expense_date.day:02d}"
@@ -367,7 +366,7 @@ def notify_category_budget_exceeded(user, expense):
         event_type="category_budget_exceeded",
         deduplication_key=cat_key,
         title="Category budget exceeded",
-        body=f"Your monthly budget for \"{expense.category}\" ({sym}{total:.2f}) has been exceeded.",
+        body=f'Your monthly budget for "{expense.category}" ({sym}{total:.2f}) has been exceeded.',
         url="/budget/",
         data={"category": expense.category, "total": round(float(total), 2)},
     )
@@ -376,9 +375,7 @@ def notify_category_budget_exceeded(user, expense):
 def notify_large_expense(user, expense):
     """Notify if expense amount exceeds a large threshold relative to monthly budget."""
     expense_date = timezone.localtime(expense.expense_date)
-    budget = Budget.objects.filter(
-        user=user, month=expense_date.month, year=expense_date.year
-    ).first()
+    budget = Budget.objects.filter(user=user, month=expense_date.month, year=expense_date.year).first()
     threshold = 0
     if budget and budget.total_monthly_budget > 0:
         threshold = budget.total_monthly_budget * Decimal(str(LARGE_EXPENSE_THRESHOLD_RATIO))
@@ -404,7 +401,7 @@ def notify_recurring_expense_ended(user, re):
         user,
         event_type="recurring_expense_ended",
         title="Recurring expense ended",
-        body=f"Your recurring expense \"{re.title}\" has ended.",
+        body=f'Your recurring expense "{re.title}" has ended.',
         url="/recurring-expenses/",
         data={"recurringExpenseId": re.id},
     )
@@ -425,6 +422,7 @@ def notify_auth_event(user, event_type, title, body, url="/"):
 def notify_report_generated(user, report_type, start_date, end_date):
     """Notify when a report is generated."""
     from datetime import datetime
+
     if isinstance(start_date, datetime):
         start_str = start_date.strftime("%Y-%m-%d")
     else:
@@ -449,6 +447,7 @@ def notify_ai_crud_performed(user, crud_type, description):
     if crud_type == "none":
         return {"sent": 0, "skipped": "no_crud"}
     import hashlib
+
     dedup_key = hashlib.sha256((crud_type + description).encode()).hexdigest()
     return send_once(
         user,
@@ -467,7 +466,7 @@ def notify_category_created(user, cat_name):
         user,
         event_type="category_created",
         title="Category created",
-        body=f"Category \"{cat_name}\" has been created.",
+        body=f'Category "{cat_name}" has been created.',
         url="/settings/",
     )
 
@@ -478,7 +477,7 @@ def notify_category_deleted(user, cat_name):
         user,
         event_type="category_deleted",
         title="Category deleted",
-        body=f"Category \"{cat_name}\" has been deleted.",
+        body=f'Category "{cat_name}" has been deleted.',
         url="/settings/",
     )
 
@@ -511,16 +510,11 @@ def notify_budget_deleted(user, month, year):
 # Summaries
 def generate_daily_spending_tally(user):
     """Send a daily spending tally notification."""
-    from datetime import timedelta
     today = timezone.localtime(timezone.now())
     start = today.replace(hour=0, minute=0, second=0, microsecond=0)
     day_key = f"{start.year}-{start.month:02d}-{start.day:02d}"
-    total = Expense.objects.filter(
-        user=user, expense_date__gte=start
-    ).aggregate(total=Sum("amount"))["total"] or 0
-    count = Expense.objects.filter(
-        user=user, expense_date__gte=start
-    ).count()
+    total = Expense.objects.filter(user=user, expense_date__gte=start).aggregate(total=Sum("amount"))["total"] or 0
+    count = Expense.objects.filter(user=user, expense_date__gte=start).count()
     if total == 0:
         return {"sent": 0, "skipped": "no_expenses_today"}
     user_settings, _ = UserSettings.objects.get_or_create(user=user)
@@ -541,16 +535,21 @@ def generate_monthly_summary(user):
     now = timezone.localtime(timezone.now())
     start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     from datetime import timedelta
+
     end = (start + timedelta(days=32)).replace(day=1)
-    total = Expense.objects.filter(
-        user=user, expense_date__gte=start, expense_date__lt=end
-    ).aggregate(total=Sum("amount"))["total"] or 0
-    count = Expense.objects.filter(
-        user=user, expense_date__gte=start, expense_date__lt=end
-    ).count()
-    category_qs = Expense.objects.filter(
-        user=user, expense_date__gte=start, expense_date__lt=end
-    ).values("category").annotate(total=Sum("amount")).order_by("-total")
+    total = (
+        Expense.objects.filter(user=user, expense_date__gte=start, expense_date__lt=end).aggregate(total=Sum("amount"))[
+            "total"
+        ]
+        or 0
+    )
+    count = Expense.objects.filter(user=user, expense_date__gte=start, expense_date__lt=end).count()
+    category_qs = (
+        Expense.objects.filter(user=user, expense_date__gte=start, expense_date__lt=end)
+        .values("category")
+        .annotate(total=Sum("amount"))
+        .order_by("-total")
+    )
     top_cat = category_qs.first()
     top_cat_name = top_cat["category"] if top_cat else "N/A"
     top_cat_total = top_cat["total"] if top_cat else 0
@@ -577,20 +576,22 @@ def generate_spending_trend_alert(user):
     now = timezone.localtime(timezone.now())
     m, y = now.month, now.year
     from datetime import timedelta
+
     start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     days_passed = now.day
     days_in_month = 30
-    cur_total = Expense.objects.filter(
-        user=user, expense_date__gte=start
-    ).aggregate(total=Sum("amount"))["total"] or 0
+    cur_total = Expense.objects.filter(user=user, expense_date__gte=start).aggregate(total=Sum("amount"))["total"] or 0
     if days_passed == 0:
         return {"sent": 0, "skipped": "first_day"}
     projected = (cur_total / days_passed) * days_in_month
-    lm, ly = (m - 1, y) if m > 1 else (12, y - 1)
+    _lm, _ly = (m - 1, y) if m > 1 else (12, y - 1)
     prev_start = (start - timedelta(days=start.day)).replace(day=1)
-    prev_total = Expense.objects.filter(
-        user=user, expense_date__gte=prev_start, expense_date__lt=start
-    ).aggregate(total=Sum("amount"))["total"] or 0
+    prev_total = (
+        Expense.objects.filter(user=user, expense_date__gte=prev_start, expense_date__lt=start).aggregate(
+            total=Sum("amount")
+        )["total"]
+        or 0
+    )
     if prev_total == 0:
         return {"sent": 0, "skipped": "no_previous_month_data"}
     growth = (projected / prev_total - 1) * 100
